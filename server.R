@@ -132,7 +132,7 @@ shinyServer(function(input, output, session) {
     nr <- sum(val$deaths)
     infoBox(
       value = comma(as.numeric(nr), digits = 1),
-      title = "Total U.S. Deaths",
+      title = paste("Total U.S. Deaths"),
       icon = icon("ambulance"),
       color = "red",
       fill = TRUE
@@ -431,11 +431,11 @@ shinyServer(function(input, output, session) {
   
   
   output$counter.cases1 <- renderInfoBox({
-    val <- state_data() %>% group_by(state) %>% filter(date==max(date)) %>% summarise(cases=sum(cases), deaths=sum(deaths))
+    val <- state_data() %>% filter(state==input$state)  %>% group_by(state) %>% filter(date==max(date)) %>% summarise(cases=sum(cases), deaths=sum(deaths))
     nr <- sum(val$cases)
     infoBox(
       value = comma(as.numeric(nr), digits = 1),
-      title = "Total U.S. Cases",
+      title = paste("Total Cases in", input$state),
       icon = icon("heartbeat"),
       color = "purple",
       fill = TRUE
@@ -443,11 +443,11 @@ shinyServer(function(input, output, session) {
   })
   
   output$counter.deaths1 <- renderInfoBox({
-    val <- state_data() %>% group_by(state) %>% filter(date==max(date)) %>% summarise(cases=sum(cases), deaths=sum(deaths))
+    val <- state_data() %>% filter(state==input$state)  %>% group_by(state) %>% filter(date==max(date)) %>% summarise(cases=sum(cases), deaths=sum(deaths))
     nr <- sum(val$deaths)
     infoBox(
       value = comma(as.numeric(nr), digits = 1),
-      title = "Total U.S. Deaths",
+      title = paste("Total Deaths in", input$state),
       icon = icon("ambulance"),
       color = "red",
       fill = TRUE
@@ -497,7 +497,7 @@ shinyServer(function(input, output, session) {
         ) %>%
         select(date, time, sumcases, logsumcases)
       colnames(corona.sama.all) <- c("date", "time", "cases", "logcases")
-      cutoff <- "2020/04/01"
+      cutoff <- today()
       corona.sama <- corona.sama.all %>% filter(date<=cutoff)
       
       plotdata <- pivot_longer(corona.sama, col=3:4, names_to="Type", values_to="values")
@@ -584,7 +584,7 @@ shinyServer(function(input, output, session) {
         select(date, time, sumcases, logsumcases)
       print(corona.sama.all)
       colnames(corona.sama.all) <- c("date", "time", "cases", "logcases")
-      cutoff <- "2020-5-10"
+      cutoff <- today()
       corona.sama <- corona.sama.all %>% filter(date<=cutoff)
       
       plotdata <- pivot_longer(corona.sama, col=3:4, names_to="Type", values_to="values")
