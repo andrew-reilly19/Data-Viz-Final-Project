@@ -95,7 +95,11 @@ body <- dashboardBody(
   )),
   tabItems(
   # Boxes need to be put in a row (or column)
-    tabItem(tabName = "usa",                              #Layout for Total USA map
+    tabItem(tabName = "usa", #Layout for Total USA map
+      fluidRow(
+        infoBoxOutput(width=4, "counter.deaths"),
+        infoBoxOutput(width=4, "counter.cases")
+      ),
       fluidRow(
         box(width=6, 
             status="info", 

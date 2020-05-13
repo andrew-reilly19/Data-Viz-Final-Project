@@ -10,6 +10,7 @@ library(plotly)
 library(DT)
 library(deSolve)
 library(cowplot)
+library(scales)
 
 shinyServer(function(input, output, session) {
   #output$menu <- renderMenu({
@@ -26,6 +27,7 @@ shinyServer(function(input, output, session) {
                   }
                )
   
+
   output$data_info <- renderUI({
     if(input$state == "Virginia"){
       object <- box(width = 4, 
@@ -122,6 +124,30 @@ shinyServer(function(input, output, session) {
   }
   corona <- rbind(adjustment, corona)
   return(corona)
+  })
+  
+  output$counter.deaths <- renderInfoBox({
+    val <- state_data() %>% group_by(state) %>% filter(date==max(date)) %>% summarise(cases=sum(cases), deaths=sum(deaths))
+    nr <- sum(val$deaths)
+    infoBox(
+      value = comma(as.numeric(nr), digits = 1),
+      title = "Total U.S. Deaths",
+      icon = icon("ambulance"),
+      color = "red",
+      fill = TRUE
+    )
+  })
+  
+  output$counter.cases <- renderInfoBox({
+    val <- state_data() %>% group_by(state) %>% filter(date==max(date)) %>% summarise(cases=sum(cases), deaths=sum(deaths))
+    nr <- sum(val$cases)
+    infoBox(
+      value = comma(as.numeric(nr), digits = 1),
+      title = "Total U.S. Cases",
+      icon = icon("heartbeat"),
+      color = "purple",
+      fill = TRUE
+    )
   })
   
   output$usadata <-renderDT({
