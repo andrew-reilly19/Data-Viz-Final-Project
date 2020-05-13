@@ -6,7 +6,7 @@ To-do list:
   * Incorporate census dataset into models for better population accuracy
   * Add Counter for Total Cases/Deaths **Simona**
   * Add explanations to tabs
-  * Fix Modeling cutoff date for up-to-date modeling
+  * Fix Modeling cutoff date for up-to-date modeling **Simona**
   * Improve Speed/optimization of mapping/animation
 
  Please add additional tasks to this list if you find something else we should do (or might want to try)
