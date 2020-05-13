@@ -11,6 +11,7 @@ library(DT)
 library(deSolve)
 library(cowplot)
 library(scales)
+library(lubridate)
 
 shinyServer(function(input, output, session) {
   #output$menu <- renderMenu({
@@ -429,7 +430,29 @@ shinyServer(function(input, output, session) {
   })
   
   
+  output$counter.cases1 <- renderInfoBox({
+    val <- state_data() %>% group_by(state) %>% filter(date==max(date)) %>% summarise(cases=sum(cases), deaths=sum(deaths))
+    nr <- sum(val$cases)
+    infoBox(
+      value = comma(as.numeric(nr), digits = 1),
+      title = "Total U.S. Cases",
+      icon = icon("heartbeat"),
+      color = "purple",
+      fill = TRUE
+    )
+  })
   
+  output$counter.deaths1 <- renderInfoBox({
+    val <- state_data() %>% group_by(state) %>% filter(date==max(date)) %>% summarise(cases=sum(cases), deaths=sum(deaths))
+    nr <- sum(val$deaths)
+    infoBox(
+      value = comma(as.numeric(nr), digits = 1),
+      title = "Total U.S. Deaths",
+      icon = icon("ambulance"),
+      color = "red",
+      fill = TRUE
+    )
+  })
   
   #This is going to be for the modeling page. 
   
@@ -561,7 +584,7 @@ shinyServer(function(input, output, session) {
         select(date, time, sumcases, logsumcases)
       print(corona.sama.all)
       colnames(corona.sama.all) <- c("date", "time", "cases", "logcases")
-      cutoff <- "2020/04/01"
+      cutoff <- "2020-5-10"
       corona.sama <- corona.sama.all %>% filter(date<=cutoff)
       
       plotdata <- pivot_longer(corona.sama, col=3:4, names_to="Type", values_to="values")

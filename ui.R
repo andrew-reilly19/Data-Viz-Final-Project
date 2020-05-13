@@ -5,6 +5,7 @@ library(maps)
 library(plotly)
 library(DT)
 library(deSolve)
+library(lubridate)
 
 header <- dashboardHeader(title = "United States Coronavirus")
 
@@ -122,16 +123,21 @@ body <- dashboardBody(
     
     tabItem(tabName = "region",      #Regional plots and data
       fluidRow(
-        box(width = 6, 
+              infoBoxOutput(width=4, "counter.deaths1"),
+              infoBoxOutput(width=4, "counter.cases1")
+            ),
+      fluidRow(
+        box(width = 7, 
             status = "info",
-            title = "Options",
+            title = "COVID-19 Cases by County",
             solidHeader = TRUE,
             collapsible = FALSE,
             plotlyOutput("county")
-            )
-        ),
-      fluidRow(
+            ),
         uiOutput("data_info")
+          
+        )),
+        
         
   #      box(width = 6, 
   #          status = "warning",
@@ -140,8 +146,8 @@ body <- dashboardBody(
   #          collapsible = FALSE,
             #DTOutput("poopy")
   #          )
-        )
-      ),                              #End Of Regional Plots and Data
+        
+                                 #End Of Regional Plots and Data
     tabItem(tabName = "models",       #Modeling Tab
             box(status = "info",
                 title = "Modeling of Cases in different regions",
