@@ -2,7 +2,7 @@
 Final project for Data Visualization class Spring 2020
 
 To-do list:
-  * Add spline model to modeling tab
+  * Add spline model to modeling tab **Andrew**
   * Incorporate census dataset into models for better population accuracy **Justin**
   * Add Counter for Total Cases/Deaths **Simona**
   * Add explanations to tabs **Justin**
