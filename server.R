@@ -438,6 +438,7 @@ shinyServer(function(input, output, session) {
     if (input$`county-state` == "county"){
       #print(input$`state-model`)
       df <- corona() %>% filter(state == tolower(input$`state-model`))
+      df <- df[order(df$county),] 
       #print(df)
       counties <- as.vector(df["county"])
       #print(counties)

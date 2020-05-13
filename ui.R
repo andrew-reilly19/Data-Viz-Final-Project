@@ -79,12 +79,15 @@ sidebar <- dashboardSidebar(
                                   label = "Population Size",
                                   min = 100, step = 1, value = 80000),
                      sliderInput("beta", 
-                                 label = "Recovery Rate: (8 days)",
+                                 label = "Recovery Rate: (8 is current estimate)",
                                  step = 1,
                                  value = 8,
-                                 min = 1, max = 15)
-                     
-                     )
+                                 min = 1, max = 15),
+                     radioButtons("model_type",
+                                 label = h4("Pick Model Type"),
+                                 choices = list("Standard model"="standard", "Spline model"="spline"),
+                                 selected = "standard")
+                  )
     )
 )
 
