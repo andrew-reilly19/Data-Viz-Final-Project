@@ -80,7 +80,7 @@ sidebar <- dashboardSidebar(
                                   label = "Population Size",
                                   min = 100, step = 1, value = 200000),
                      sliderInput("beta", 
-                                 label = "Recovery Rate: (8 is current estimate)",
+                                 label = "Recovery Rate:",
                                  step = 1,
                                  value = 8,
                                  min = 1, max = 15),
