@@ -202,8 +202,10 @@ shinyServer(function(input, output, session) {
                                       log_cases = ifelse(cases == 0,0, log(cases)),
                                       log_deaths = ifelse(deaths == 0, 0 , log(deaths)),
                                       log_difference = log_deaths - log_cases,
-                                      proportion = deaths/cases
-                                      )
+                                      proportion = deaths/cases,
+                                      cases_per_thousand = round((cases/POPESTIMATE2019)*1000, digits = 4),
+                                      log_cases_per_thousand = ifelse(cases == 0, 0, ifelse(cases_per_thousand == 0, -10000, log(cases_per_thousand)))
+    )
     #statedata$hover <- with(statedata, paste(state, "<br>", "Total Cases:", cases, "<br>", "Logarithm Scale:", round(log_cases, digits = 3), "<br>", "Deaths:", deaths))
     
     l <- list(color = toRGB("white"), width = 2)
@@ -222,21 +224,23 @@ shinyServer(function(input, output, session) {
                                 paste(state, "<br>", 
                                       "Total Cases:", cases, "<br>", 
                                       "Logarithm Scale:", round(log_cases, digits = 3), 
-                                      "<br>", "Total Deaths:", deaths))
+                                      "<br>", "Total Deaths:", deaths, "<br>",
+                                      "Cases Per Thousand:", cases_per_thousand))
         fig <- plot_geo(statedata, locationmode = "USA-states")
         fig <- fig %>% add_trace(
-              z = ~log_deaths, text = ~hover, locations = ~state_alt, color = ~log_deaths, frame = ~date
-              ) %>% layout(geo = g, title = paste("United States Coronavirus", input$`deaths-cases`, "on a", input$`log-normal`, "scale"))
+          z = ~log_deaths, text = ~hover, locations = ~state_alt, color = ~log_deaths, frame = ~date
+        ) %>% layout(geo = g, title = paste("United States Coronavirus", input$`deaths-cases`, "on a", input$`log-normal`, "scale"))
       } else { #deaths, normal representation
-          statedata$hover <- with(statedata, 
+        statedata$hover <- with(statedata, 
                                 paste(state, "<br>", 
                                       "Total Cases:", cases, "<br>", 
                                       #"Logarithm Scale:", round(log_cases, digits = 3), 
-                                      "<br>", "Total Deaths:", deaths))
-          fig <- plot_geo(statedata, locationmode = "USA-states")
-          fig <- fig %>% add_trace(
-            z = ~deaths, text = ~hover, locations = ~state_alt, color = ~deaths, frame = ~date
-          ) %>% layout(geo = g, title = paste("United States Coronavirus", input$`deaths-cases`, "on a", input$`log-normal`, "scale"))
+                                      "<br>", "Total Deaths:", deaths, "<br>",
+                                      "Cases Per Thousand:", cases_per_thousand))
+        fig <- plot_geo(statedata, locationmode = "USA-states")
+        fig <- fig %>% add_trace(
+          z = ~deaths, text = ~hover, locations = ~state_alt, color = ~deaths, frame = ~date
+        ) %>% layout(geo = g, title = paste("United States Coronavirus", input$`deaths-cases`, "on a", input$`log-normal`, "scale"))
       }
     } else { # Must have selected cases or CFR
       if(input$`deaths-cases` == "case fatality rate"){
@@ -247,9 +251,10 @@ shinyServer(function(input, output, session) {
                                         "Logarithm Scale:", round(log_cases, digits = 3), 
                                         "<br>", "Total Deaths:", deaths, "<br>",
                                         "log(CFR):", log_difference, "<br>",
-                                        "Case Fatality Rate:", paste(round(proportion, digits = 3)*100, "%", sep = "")
-                                        )
+                                        "Case Fatality Rate:", paste(round(proportion, digits = 3)*100, "%", "<br>",
+                                                                     "Cases Per Thousand:", cases_per_thousand, sep = "")
                                   )
+          )
           fig <- plot_geo(statedata, locationmode = "USA-states")
           fig <- fig %>% add_trace(
             z = ~log_difference, text = ~hover, locations = ~state_alt, color = ~log_difference, frame = ~date
@@ -260,39 +265,40 @@ shinyServer(function(input, output, session) {
                                         "Total Cases:", cases, "<br>", 
                                         #"Logarithm Scale:", round(log_cases, digits = 3), 
                                         "Total Deaths:", deaths, "<br>",
-                                        "Case Fatality Rate:", paste(round(proportion, digits = 3)*100, "%", sep = "")
-                                        )
+                                        "Case Fatality Rate:", paste(round(proportion, digits = 3)*100, "%", "<br>",
+                                                                     "Cases Per Thousand:", cases_per_thousand, sep = "")
                                   )
+          )
           fig <- plot_geo(statedata, locationmode = "USA-states")
           fig <- fig %>% add_trace(
             z = ~proportion, text = ~hover, locations = ~state_alt, color = ~proportion, frame = ~date
           ) %>% layout(geo = g, title = paste("United States Coronavirus", input$`deaths-cases`, "on a", input$`log-normal`, "scale"))
         }
       } else{ # selected cases
-          if(input$`deaths-cases` == "cases per thousand"){
-            if(input$`log-normal` == "log"){
-              statedata$hover <- with(statedata, 
-                                      paste(state, "<br>", 
-                                            "Total Cases:", cases, "<br>", 
-                                            "Logarithm Scale:", round(log_cases, digits = 3), 
-                                            "<br>", "Total Deaths:", deaths, "<br>",
-                                            "Cases Per Thousand:", cases_per_thousand))
-              fig <- plot_geo(statedata, locationmode = "USA-states")
-              fig <- fig %>% add_trace(
-                z = ~log_cases_per_thousand, text = ~hover, locations = ~state_alt, color = ~log_cases_per_thousand, frame = ~date
-              ) %>% layout(geo = g, title = paste("United States Coronavirus", input$`deaths-cases`, "on a", input$`log-normal`, "scale"))
-            } else { # Display cases_per_thousand with a linear scale
-              statedata$hover <- with(statedata, 
-                                      paste(state, "<br>", 
-                                            "Total Cases:", cases, "<br>", 
-                                            #"Logarithm Scale:", round(log_cases, digits = 3), 
-                                            "<br>", "Total Deaths:", deaths, "<br>",
-                                            "Cases Per Thousand:", cases_per_thousand))
-              fig <- plot_geo(statedata, locationmode = "USA-states")
-              fig <- fig %>% add_trace(
-                z = ~cases_per_thousand, text = ~hover, locations = ~state_alt, color = ~cases_per_thousand, frame = ~date
-              ) %>% layout(geo = g, title = paste("United States Coronavirus", input$`deaths-cases`, "on a", input$`log-normal`, "scale"))
-            }
+        if(input$`deaths-cases` == "cases per thousand"){
+          if(input$`log-normal` == "log"){
+            statedata$hover <- with(statedata, 
+                                    paste(state, "<br>", 
+                                          "Total Cases:", cases, "<br>", 
+                                          "Logarithm Scale:", round(log_cases, digits = 3), 
+                                          "<br>", "Total Deaths:", deaths, "<br>",
+                                          "Cases Per Thousand:", cases_per_thousand))
+            fig <- plot_geo(statedata, locationmode = "USA-states")
+            fig <- fig %>% add_trace(
+              z = ~log_cases_per_thousand, text = ~hover, locations = ~state_alt, color = ~log_cases_per_thousand, frame = ~date
+            ) %>% layout(geo = g, title = paste("United States Coronavirus", input$`deaths-cases`, "on a", input$`log-normal`, "scale"))
+          } else { # Display cases_per_thousand with a linear scale
+            statedata$hover <- with(statedata, 
+                                    paste(state, "<br>", 
+                                          "Total Cases:", cases, "<br>", 
+                                          #"Logarithm Scale:", round(log_cases, digits = 3), 
+                                          "<br>", "Total Deaths:", deaths, "<br>",
+                                          "Cases Per Thousand:", cases_per_thousand))
+            fig <- plot_geo(statedata, locationmode = "USA-states")
+            fig <- fig %>% add_trace(
+              z = ~cases_per_thousand, text = ~hover, locations = ~state_alt, color = ~cases_per_thousand, frame = ~date
+            ) %>% layout(geo = g, title = paste("United States Coronavirus", input$`deaths-cases`, "on a", input$`log-normal`, "scale"))
+          }
           
         }else{# selected cases
           if(input$`log-normal` == "log"){
@@ -324,7 +330,7 @@ shinyServer(function(input, output, session) {
     
     return(fig)
   })#End of plotly Graphs for Total United STates
-
+  
   ##################################################### STATES PAGE #########################################################
   
   
