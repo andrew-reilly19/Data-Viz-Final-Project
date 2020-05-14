@@ -78,14 +78,20 @@ sidebar <- dashboardSidebar(
                      uiOutput("state-county-dropdown"),
                      numericInput("population",
                                   label = "Population Size",
-                                  min = 100, step = 1, value = 80000),
+                                  min = 100, step = 1, value = 200000),
                      sliderInput("beta", 
-                                 label = "Recovery Rate: (8 days)",
+                                 label = "Recovery Rate: (8 is current estimate)",
                                  step = 1,
                                  value = 8,
-                                 min = 1, max = 15)
-                     
-                     )
+                                 min = 1, max = 15),
+                     sliderInput("predict_days",
+                                 label = "Days to predict",
+                                 min = 0, max = 10, step = 1, value = 3)
+                     # radioButtons("model_type",
+                     #             label = h4("Pick Model Type"),
+                     #             choices = list("Standard SIR model"="standard", "Spline model"="spline"),
+                     #             selected = "standard")
+                  )
     )
 )
 
@@ -149,10 +155,18 @@ body <- dashboardBody(
         
                                  #End Of Regional Plots and Data
     tabItem(tabName = "models",       #Modeling Tab
+          fluidRow(
             box(status = "info",
-                title = "Modeling of Cases in different regions",
+                title = "SIR Modeling of Cases in different regions",
                 solidHeader = TRUE,
-                plotOutput("state_model"))
+                plotOutput("state_model")),
+            box(status = "info",
+                title = "Splines Modeling of Cases in different regions",
+                solidHeader = TRUE,
+                plotOutput("spline_model")
+                )
+            
+          )
     )
   )
 )
