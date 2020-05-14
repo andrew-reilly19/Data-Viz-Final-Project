@@ -214,7 +214,9 @@ shinyServer(function(input, output, session) {
                                       log_cases = ifelse(cases == 0,0, log(cases)),
                                       log_deaths = ifelse(deaths == 0, 0 , log(deaths)),
                                       log_difference = log_deaths - log_cases,
-                                      proportion = deaths/cases
+                                      proportion = deaths/cases,
+                                      cases_per_thousand = round((cases/POPESTIMATE2019)*1000, digits = 4),
+                                      log_cases_per_thousand = ifelse(cases == 0, 0, ifelse(cases_per_thousand == 0, -10000, log(cases_per_thousand)))
     )
     #statedata$hover <- with(statedata, paste(state, "<br>", "Total Cases:", cases, "<br>", "Logarithm Scale:", round(log_cases, digits = 3), "<br>", "Deaths:", deaths))
     
@@ -234,7 +236,8 @@ shinyServer(function(input, output, session) {
                                 paste(state, "<br>", 
                                       "Total Cases:", cases, "<br>", 
                                       "Logarithm Scale:", round(log_cases, digits = 3), 
-                                      "<br>", "Total Deaths:", deaths))
+                                      "<br>", "Total Deaths:", deaths, "<br>",
+                                      "Cases Per Thousand:", cases_per_thousand))
         fig <- plot_geo(statedata, locationmode = "USA-states")
         fig <- fig %>% add_trace(
           z = ~log_deaths, text = ~hover, locations = ~state_alt, color = ~log_deaths, frame = ~date
@@ -244,7 +247,8 @@ shinyServer(function(input, output, session) {
                                 paste(state, "<br>", 
                                       "Total Cases:", cases, "<br>", 
                                       #"Logarithm Scale:", round(log_cases, digits = 3), 
-                                      "<br>", "Total Deaths:", deaths))
+                                      "<br>", "Total Deaths:", deaths, "<br>",
+                                      "Cases Per Thousand:", cases_per_thousand))
         fig <- plot_geo(statedata, locationmode = "USA-states")
         fig <- fig %>% add_trace(
           z = ~deaths, text = ~hover, locations = ~state_alt, color = ~deaths, frame = ~date
@@ -259,7 +263,8 @@ shinyServer(function(input, output, session) {
                                         "Logarithm Scale:", round(log_cases, digits = 3), 
                                         "<br>", "Total Deaths:", deaths, "<br>",
                                         "log(CFR):", log_difference, "<br>",
-                                        "Case Fatality Rate:", paste(round(proportion, digits = 3)*100, "%", sep = "")
+                                        "Case Fatality Rate:", paste(round(proportion, digits = 3)*100, "%", "<br>",
+                                                                     "Cases Per Thousand:", cases_per_thousand, sep = "")
                                   )
           )
           fig <- plot_geo(statedata, locationmode = "USA-states")
@@ -272,7 +277,8 @@ shinyServer(function(input, output, session) {
                                         "Total Cases:", cases, "<br>", 
                                         #"Logarithm Scale:", round(log_cases, digits = 3), 
                                         "Total Deaths:", deaths, "<br>",
-                                        "Case Fatality Rate:", paste(round(proportion, digits = 3)*100, "%", sep = "")
+                                        "Case Fatality Rate:", paste(round(proportion, digits = 3)*100, "%", "<br>",
+                                                                     "Cases Per Thousand:", cases_per_thousand, sep = "")
                                   )
           )
           fig <- plot_geo(statedata, locationmode = "USA-states")
@@ -424,7 +430,7 @@ shinyServer(function(input, output, session) {
           theme_minimal() + 
           scale_fill_viridis_c() + 
           labs(title = paste("Coronavirus", input$`deaths-cases`, "in" ,input$state, "by County with", input$`log-normal`, "scale"),
-               fill = paste("Number of", input$`deaths-cases`)) + 
+               fill = paste("Number of", input$`deaths-cases`), x="", y="") + 
           coord_map(projection = "albers", 
                     lat0 = 25, 
                     lat1 = 31)
@@ -439,7 +445,7 @@ shinyServer(function(input, output, session) {
           theme_minimal() + 
           scale_fill_viridis_c() + 
           labs(title = paste("Coronavirus", input$`deaths-cases`, "in" ,input$state, "by County with", input$`log-normal`, "scale"),
-               fill = paste("Number of", input$`deaths-cases`)) + 
+               fill = paste("Number of", input$`deaths-cases`), x="", y="") + 
           coord_map(projection = "albers", 
                     lat0 = 25, 
                     lat1 = 31)
@@ -460,7 +466,7 @@ shinyServer(function(input, output, session) {
             theme_minimal() + 
             scale_fill_viridis_c() + 
             labs(title = paste("Coronavirus", input$`deaths-cases`, "in" ,input$state, "by County with", input$`log-normal`, "scale"),
-                 fill = paste("Number of", input$`deaths-cases`)) + 
+                 fill = paste("Number of", input$`deaths-cases`), x="", y="") + 
             coord_map(projection = "albers", 
                       lat0 = 25, 
                       lat1 = 31)
@@ -478,7 +484,7 @@ shinyServer(function(input, output, session) {
             theme_minimal() + 
             scale_fill_viridis_c() + 
             labs(title = paste("Coronavirus", input$`deaths-cases`, "in" ,input$state, "by County with", input$`log-normal`, "scale"),
-                 fill = paste("Number of", input$`deaths-cases`)) + 
+                 fill = paste("Number of", input$`deaths-cases`), x="", y="") + 
             coord_map(projection = "albers", 
                       lat0 = 25, 
                       lat1 = 31)
@@ -499,7 +505,7 @@ shinyServer(function(input, output, session) {
               theme_minimal() + 
               scale_fill_viridis_c() + 
               labs(title = paste("Coronavirus", input$`deaths-cases`, "in" ,input$state, "by County with", input$`log-normal`, "scale"),
-                   fill = paste("Number of", input$`deaths-cases`)) + 
+                   fill = paste("Number of", input$`deaths-cases`), x="", y="") + 
               coord_map(projection = "albers", 
                         lat0 = 25, 
                         lat1 = 31)
@@ -517,7 +523,7 @@ shinyServer(function(input, output, session) {
               theme_minimal() + 
               scale_fill_viridis_c() + 
               labs(title = paste("Coronavirus", input$`deaths-cases`, "in" ,input$state, "by County with", input$`log-normal`, "scale"),
-                   fill = paste("Number of", input$`deaths-cases`)) + 
+                   fill = paste("Number of", input$`deaths-cases`), x="", y="") + 
               coord_map(projection = "albers", 
                         lat0 = 25, 
                         lat1 = 31)
@@ -537,7 +543,7 @@ shinyServer(function(input, output, session) {
               theme_minimal() + 
               scale_fill_viridis_c() + 
               labs(title = paste("Coronavirus", input$`deaths-cases`, "in" ,input$state, "by County with", input$`log-normal`, "scale"),
-                   fill = paste("Number of", input$`deaths-cases`)) + 
+                   fill = paste("Number of", input$`deaths-cases`), x="", y="") + 
               coord_map(projection = "albers", 
                         lat0 = 25, 
                         lat1 = 31)
@@ -555,7 +561,7 @@ shinyServer(function(input, output, session) {
               theme_minimal() + 
               scale_fill_viridis_c() + 
               labs(title = paste("Coronavirus", input$`deaths-cases`, "in" ,input$state, "by County with", input$`log-normal`, "scale"),
-                   fill = paste("Number of", input$`deaths-cases`)) + 
+                   fill = paste("Number of", input$`deaths-cases`), x="", y="") + 
               coord_map(projection = "albers", 
                         lat0 = 25, 
                         lat1 = 31)
@@ -727,7 +733,7 @@ shinyServer(function(input, output, session) {
         labs(
           title= paste0("Number of Infections in ", input$`state-model`, " (Population:", input$population ,")"), 
           subtitle=paste0("Recovery Period is assumed as ", input$beta, " days"), x="Day", y="Number of Infections") +
-        scale_x_date(date_breaks="6 days", date_label="%b %d") +
+        scale_x_date(date_breaks="7 days", date_label="%b %d") +
         theme_minimal()
       
       
@@ -804,7 +810,7 @@ shinyServer(function(input, output, session) {
         labs(
           title= paste0("Number of Infections in ", input$`county-model`, " (Population:", input$population ,")"), 
           subtitle=paste0("Recovery Period is assumed as ", input$beta, " days"), x="Day", y="Number of Infections") +
-        scale_x_date(date_breaks="6 days", date_label="%b %d") +
+        scale_x_date(date_breaks="7 days", date_label="%b %d") +
         theme_minimal()
       return(plot)
     }
@@ -865,24 +871,24 @@ shinyServer(function(input, output, session) {
         geom_line(color="red") +
         geom_ribbon(aes(ymin=logmean.LB, ymax=logmean.UB), fill="red", color=NA, alpha=0.2) +
         geom_point(data=corona.sama, aes(x=date, y=log(cumcases)), col="darkblue", alpha=0.4) +
-        scale_x_date(date_breaks="8 days", date_label="%b %d") +
+        scale_x_date(date_breaks="7 days", date_label="%b %d") +
         labs(
           title= paste0("Number of Infections in ", input$`state-model`, " (Population:", input$population ,")"),
-          subtitle=paste0("Recovery Period is assumed as ", input$beta, " days"), x="Day", y="Number of Infections") +
+          subtitle="Fitted with a Smoothing Spline", x="Day", y="Log Number of Infections") +
         theme_minimal()
       
       #Mean cases
       p2 <- ggplot(data=plotdata, aes(x=date, y=mean)) +
         geom_line(color="red") +
         geom_ribbon(aes(ymin=mean.LB, ymax=mean.UB), fill="red", color=NA, alpha=0.2) +
-        geom_point(data=corona.sama, aes(x=date, y=log(cumcases)), col="darkblue", alpha=0.4) +
-        scale_x_date(date_breaks="8 days", date_label="%b %d") +
+        geom_point(data=corona.sama, aes(x=date, y=cumcases), col="darkblue", alpha=0.4) +
+        scale_x_date(date_breaks="7 days", date_label="%b %d") +
         labs(
           title= paste0("Number of Infections in ", input$`state-model`, " (Population:", input$population ,")"),
-          subtitle=paste0("Recovery Period is assumed as ", input$beta, " days"), x="Day", y="Number of Infections") +
+          subtitle="Fitted with a Smoothing Spline", x="Day", y="Number of Infections") +
         theme_minimal()
       
-      return(p1)
+      return(plot_grid(p2,p1,ncol=2))
     } else {
       
       # This is county
@@ -926,24 +932,24 @@ shinyServer(function(input, output, session) {
         geom_line(color="red") +
         geom_ribbon(aes(ymin=logmean.LB, ymax=logmean.UB), fill="red", color=NA, alpha=0.2) +
         geom_point(data=corona.sama, aes(x=date, y=log(cumcases)), col="darkblue", alpha=0.4) +
-        scale_x_date(date_breaks="8 days", date_label="%b %d") +
+        scale_x_date(date_breaks="7 days", date_label="%b %d") +
         labs(
           title= paste0("Number of Infections in ", input$`state-model`, " (Population:", input$population ,")"),
-          subtitle=paste0("Recovery Period is assumed as ", input$beta, " days"), x="Day", y="Number of Infections") +
+          subtitle="Fitted with a Smoothing Spline", x="Day", y="Log Number of Infections") +
         theme_minimal()
       
       #Mean cases
       p2 <- ggplot(data=plotdata, aes(x=date, y=mean)) +
         geom_line(color="red") +
         geom_ribbon(aes(ymin=mean.LB, ymax=mean.UB), fill="red", color=NA, alpha=0.2) +
-        geom_point(data=corona.sama, aes(x=date, y=log(cumcases)), col="darkblue", alpha=0.4) +
-        scale_x_date(date_breaks="8 days", date_label="%b %d") +
+        geom_point(data=corona.sama, aes(x=date, y=cumcases), col="darkblue", alpha=0.4) +
+        scale_x_date(date_breaks="7 days", date_label="%b %d") +
         labs(
           title= paste0("Number of Infections in ", input$`state-model`, " (Population:", input$population ,")"),
-          subtitle=paste0("Recovery Period is assumed as ", input$beta, " days"), x="Day", y="Number of Infections") +
+          subtitle="Fitted with a Smoothing Spline", x="Day", y="Number of Infections") +
         theme_minimal()
       
-      return(p1)
+      return(plot_grid(p2,p1,ncol=2))
     }
     
     

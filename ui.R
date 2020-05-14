@@ -113,13 +113,14 @@ body <- dashboardBody(
               infoBoxOutput(width=4, "counter.tests")
             ),
             fluidRow(
-              box(width=6, 
+              box(width=12, 
                   status="info", 
                   title="United States Coronavirus Spread",
                   solidHeader = TRUE,
                   plotlyOutput("usaplot")
-              ),
-              box(width=6, 
+              )),
+            fluidRow(
+              box(width=12, 
                   status="warning", 
                   title = "Raw Data",
                   solidHeader = TRUE, 
@@ -139,7 +140,7 @@ body <- dashboardBody(
               infoBoxOutput(width=4, "counter.tests1")
             ),
             fluidRow(
-              box(width = 7, 
+              box(width = 12, 
                   status = "info",
                   title = "COVID-19 Cases by County",
                   solidHeader = TRUE,
@@ -162,11 +163,14 @@ body <- dashboardBody(
     #End Of Regional Plots and Data
     tabItem(tabName = "models",       #Modeling Tab
             fluidRow(
-              box(status = "info",
+              box(width=6,
+                  status = "info",
                   title = "SIR Modeling of Cases in different regions",
                   solidHeader = TRUE,
-                  plotOutput("state_model")),
-              box(status = "info",
+                  plotOutput("state_model"))),
+            fluidRow(
+              box(width = 12,
+                  status = "info",
                   title = "Splines Modeling of Cases in different regions",
                   solidHeader = TRUE,
                   plotOutput("spline_model")
