@@ -77,7 +77,7 @@ sidebar <- dashboardSidebar(
                      uiOutput("state-county-dropdown"),
                      numericInput("population",
                                   label = "Population Size",
-                                  min = 100, step = 1, value = 80000),
+                                  min = 100, step = 1, value = 200000),
                      sliderInput("beta", 
                                  label = "Recovery Rate: (8 is current estimate)",
                                  step = 1,
@@ -149,10 +149,18 @@ body <- dashboardBody(
         )
       ),                              #End Of Regional Plots and Data
     tabItem(tabName = "models",       #Modeling Tab
+          fluidRow(
             box(status = "info",
-                title = "Modeling of Cases in different regions",
+                title = "SIR Modeling of Cases in different regions",
                 solidHeader = TRUE,
-                plotOutput("state_model"))
+                plotOutput("state_model")),
+            box(status = "info",
+                title = "Splines Modeling of Cases in different regions",
+                solidHeader = TRUE,
+                plotOutput("spline_model")
+                )
+            
+          )
     )
   )
 )
