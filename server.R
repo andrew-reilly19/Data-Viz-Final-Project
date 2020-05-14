@@ -128,6 +128,10 @@ shinyServer(function(input, output, session) {
   return(corona)
   })
   
+  
+  ##################################################### NATIONAL PAGE #########################################################
+  
+  
   output$counter.deaths <- renderInfoBox({
     val <- state_data() %>% group_by(state) %>% filter(date==max(date)) %>% summarise(cases=sum(cases), deaths=sum(deaths))
     nr <- sum(val$deaths)
@@ -258,7 +262,11 @@ shinyServer(function(input, output, session) {
     }
     
     return(fig)
-  })                                      #End of plotly Graphs for Total United STates
+  })#End of plotly Graphs for Total United STates
+
+  ##################################################### STATES PAGE #########################################################
+  
+  
   observeEvent(input$`state-model`,{
   output$county_slider <- renderUI({
     data <- county_data() %>% filter(state == input$state) %>% mutate(date = as.Date(date))
@@ -432,10 +440,9 @@ shinyServer(function(input, output, session) {
   
   
   
-  
-  #This is going to be for the modeling page. 
-  
-  output$`state-county-dropdown` <- renderUI({
+  ##################################################### MODELING PAGE #########################################################
+
+    output$`state-county-dropdown` <- renderUI({
     
     if (input$`county-state` == "county"){
       #print(input$`state-model`)
@@ -480,12 +487,13 @@ shinyServer(function(input, output, session) {
         select(date, time, sumcases, logsumcases)
       colnames(corona.sama.all) <- c("date", "time", "cases", "logcases")
       cutoff <- "2020/05/01"
-      corona.sama <- corona.sama.all %>% filter(date<=cutoff)
+      #The SIR Model doesn't seem to do well when predicting right from the beginning, so we'll also filter by # of cases
+      corona.sama <- corona.sama.all %>% filter(date<=cutoff, cases >= 2)
       
       plotdata <- pivot_longer(corona.sama, col=3:4, names_to="Type", values_to="values")
 
       #linear Model
-      fit.lm <- lm(logcases ~ time, data=corona.sama)
+      fit.lm <- lm(cases ~ time, data=corona.sama)
       tidy(fit.lm)
       
       # Model with some bounds
@@ -545,7 +553,8 @@ shinyServer(function(input, output, session) {
       return(plot)
     } else {
       
-      # This is county
+
+# This is county
       #print(input$`county-model`)
       #print(county_data())
       corona.sama.all <- corona() %>% filter(tolower(county) == input$`county-model`) %>% 
@@ -560,7 +569,8 @@ shinyServer(function(input, output, session) {
       print(corona.sama.all)
       colnames(corona.sama.all) <- c("date", "time", "cases", "logcases")
       cutoff <- "2020/05/01"
-      corona.sama <- corona.sama.all %>% filter(date<=cutoff)
+      #The SIR Model doesn't seem to do well when predicting right from the beginning, so we'll also filter by # of cases
+      corona.sama <- corona.sama.all %>% filter(date<=cutoff, cases >= 2)
       
       plotdata <- pivot_longer(corona.sama, col=3:4, names_to="Type", values_to="values")
       
