@@ -14,8 +14,9 @@ library(scales)
 library(lubridate)
 library(mgcv)
 library(deSolve)
+library(broom)
 
-census_county <- read.csv("./data/co-est2019-alldata.csv")
+census_county <- read.csv("./Data/co-est2019-alldata.csv")
 census_mut <- census_county %>% select(STATE, COUNTY, POPESTIMATE2019, STNAME, CTYNAME) %>% mutate(fip_code = STATE*1000+COUNTY)
 
 shinyServer(function(input, output, session) {
@@ -753,7 +754,7 @@ shinyServer(function(input, output, session) {
           logsumcases = log(sumcases)
         ) %>%
         select(date, time, sumcases, logsumcases)
-      print(corona.sama.all)
+      #print(corona.sama.all)
       colnames(corona.sama.all) <- c("date", "time", "cases", "logcases")
       
       cutoff <- today()
@@ -831,7 +832,7 @@ shinyServer(function(input, output, session) {
     if (input$`county-state` == "state"){
       #example of how to use tests data
       testcases <- tests() %>% filter(state == input$`state-model`) %>% select('total')
-      print(testcases)
+      #print(testcases)
       
       corona.sama.all <- state_data() %>% filter(state == input$`state-model`) %>%
         group_by(date) %>%

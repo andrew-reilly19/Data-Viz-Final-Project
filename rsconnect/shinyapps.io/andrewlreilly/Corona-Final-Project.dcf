@@ -1,0 +1,13 @@
+name: Corona-Final-Project
+title: Corona-Final-Project
+username:
+account: andrewlreilly
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 2300542
+bundleId: 3148941
+url: https://andrewlreilly.shinyapps.io/Corona-Final-Project/
+when: 1589489703.67472
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: README.md|Failed_SIR_spline_model/.DS_Store|Failed_SIR_spline_model/server.R|Justin_Testing/app.R|Justin_Testing/co-est2019-alldata.csv
