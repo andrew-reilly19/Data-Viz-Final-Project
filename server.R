@@ -80,6 +80,33 @@ shinyServer(function(input, output, session) {
           filePath = "https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-states.csv",
           readFunc = read_csv)
   
+  tests_data <- reactiveFileReader(
+    intervalMillis = 10000, 
+    session = session,
+    filePath = "https://covidtracking.com/api/v1/states/current.csv",
+    readFunc = read_csv)
+  
+  tests <- reactive({
+  tests <- tests_data()
+  tests <- tests %>% select(c("state","positive","negative")) %>% mutate("total" = positive + negative) %>% 
+    mutate("posrate" = positive/total) %>% mutate("state" = fct_recode(factor(state),'Arizona'='AZ','Alaska'='AK','Alabama'='AL','Arkansas'='AR',
+                                                                       'California'='CA','Colorado'='CO','Connecticut'='CT','Delaware'='DE',
+                                                                       'Florida'='FL','Georgia'='GA','Hawaii'='HI','Iowa'='IA','Idaho'='ID',
+                                                                       'Illinois'='IL','Indiana'='IN','Kansas'='KS','Kentucky'='KY',
+                                                                       'Louisiana'='LA','Massachusetts'='MA','Maryland'='MD','Maine'='ME',
+                                                                       'Michigan'='MI','Minnesota'='MN','Missouri'='MO','Mississippi'='MS',
+                                                                       'Montana'='MT','North Carolina'='NC','North Dakota'='ND','Nebraska'='NE',
+                                                                       'New Hampshire'='NH','New Jersey'='NJ','New Mexico'='NM','Nevada'='NV',
+                                                                       'New York'='NY','Ohio'='OH','Oklahoma'='OK','Oregon'='OR',
+                                                                       'Pennsylvania'='PA','Rhode Island'='RI','South Carolina'='SC',
+                                                                       'South Dakota'='SD','Tennessee'='TN','Texas'='TX','Utah'='UT','Virginia'='VA',
+                                                                       'Vermont'='VT','Washington'='WA','Wisconsin'='WI','West Virginia'='WV',
+                                                                       'Wyoming'='WY'))
+  return(tests)
+  })
+  #Tests will have 5 columns - 'state' for state, 'positive' for positive test results, 'negative' for negative results,
+  #'total' for total tests done, and 'posrate' for percentage of tests that are positive.
+  
   corona <- reactive({
   corona <- county_data()
   `%nin%` = Negate(`%in%`)
@@ -523,7 +550,7 @@ shinyServer(function(input, output, session) {
       plotdata <- pivot_longer(corona.sama, col=3:4, names_to="Type", values_to="values")
 
       #linear Model
-      fit.lm <- lm(cases ~ time, data=corona.sama)
+      fit.lm <- lm(logcases ~ time, data=corona.sama)
       tidy(fit.lm)
       
       # Model with some bounds
@@ -672,6 +699,10 @@ shinyServer(function(input, output, session) {
     #Checking if the input is the state or the county
     #Then transforming the data based on that
     if (input$`county-state` == "state"){
+      #example of how to use tests data
+      testcases <- tests() %>% filter(state == input$`state-model`) %>% select('total')
+      print(testcases)
+      
       corona.sama.all <- state_data() %>% filter(state == input$`state-model`) %>%
         group_by(date) %>%
         summarize(cumcases=sum(cases)) %>%
