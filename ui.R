@@ -83,10 +83,13 @@ sidebar <- dashboardSidebar(
                                  step = 1,
                                  value = 8,
                                  min = 1, max = 15),
-                     radioButtons("model_type",
-                                 label = h4("Pick Model Type"),
-                                 choices = list("Standard model"="standard", "Spline model"="spline"),
-                                 selected = "standard")
+                     sliderInput("predict_days",
+                                 label = "Days to predict",
+                                 min = 0, max = 10, step = 1, value = 3)
+                     # radioButtons("model_type",
+                     #             label = h4("Pick Model Type"),
+                     #             choices = list("Standard SIR model"="standard", "Spline model"="spline"),
+                     #             selected = "standard")
                   )
     )
 )

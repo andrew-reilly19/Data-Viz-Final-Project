@@ -11,6 +11,7 @@ library(DT)
 library(deSolve)
 library(cowplot)
 library(scales)
+library(mgcv)
 
 shinyServer(function(input, output, session) {
   #output$menu <- renderMenu({
@@ -453,6 +454,7 @@ shinyServer(function(input, output, session) {
   
   
   output$state_model <- renderPlot({
+    #Defining SIR Model function for later use
     SIRmodel <- function(time, group, parameters) {
       S <- group[1]; I <- group[2];  R <- group[3]
       N <- S + I + R
@@ -463,7 +465,8 @@ shinyServer(function(input, output, session) {
       list(c(dS, dI, dR))
     }
     
-    
+    #Checking if the input is the state or the county
+    #Then transforming the data based on that
     if (input$`county-state` == "state"){
       corona.sama.all <- state_data() %>% filter(state == input$`state-model`) %>% 
         group_by(date) %>%
@@ -475,26 +478,24 @@ shinyServer(function(input, output, session) {
         ) %>%
         select(date, time, sumcases, logsumcases)
       colnames(corona.sama.all) <- c("date", "time", "cases", "logcases")
-      cutoff <- "2020/04/01"
+      cutoff <- "2020/05/01"
       corona.sama <- corona.sama.all %>% filter(date<=cutoff)
+      #print(head(corona.sama))
       
       plotdata <- pivot_longer(corona.sama, col=3:4, names_to="Type", values_to="values")
       
-      
-      
-      # One Plot
-      plot <- ggplot(data=plotdata, aes(x=date, y=values)) +
-        geom_point(size=1.1) +
-        geom_line() +
-        facet_wrap(vars(Type), scales = "free_y")
-      
+      # # One Plot (not used in current app)
+      # plot <- ggplot(data=plotdata, aes(x=date, y=values)) +
+      #   geom_point(size=1.1) +
+      #   geom_line() +
+      #   facet_wrap(vars(Type), scales = "free_y")
+
       #linear Model
       fit.lm <- lm(logcases ~ time, data=corona.sama)
       library(broom)
       tidy(fit.lm)
-      
+
       #Other Fitted Model:
-      
       library(deSolve)
       
       
@@ -511,7 +512,12 @@ shinyServer(function(input, output, session) {
       alpha <- exp(as.numeric(tidy(fit.lm)[1,2]))
       #alpha
       
-      times <- seq(0,40,1)
+      #This makes sure we only plot the number of days in the data for that particular county/state, 
+      #and adds the predict_days input to the model
+      
+      ndays <- max(corona.sama$time)
+      n <- ndays + input$predict_days
+      times <- seq(0,n,1)
       
       solutions <- sapply(betas, 
                           function(x) {
@@ -562,7 +568,7 @@ shinyServer(function(input, output, session) {
         select(date, time, sumcases, logsumcases)
       print(corona.sama.all)
       colnames(corona.sama.all) <- c("date", "time", "cases", "logcases")
-      cutoff <- "2020/04/01"
+      cutoff <- "2020/05/01"
       corona.sama <- corona.sama.all %>% filter(date<=cutoff)
       
       plotdata <- pivot_longer(corona.sama, col=3:4, names_to="Type", values_to="values")
@@ -592,7 +598,9 @@ shinyServer(function(input, output, session) {
       alpha <- exp(as.numeric(tidy(fit.lm)[1,2]))
       #alpha
       
-      times <- seq(0,40,1)
+      ndays <- max(corona.sama$time)
+      n <- ndays + input$predict_days
+      times <- seq(0,n,1)
       
       solutions <- sapply(betas, 
                           function(x) {
