@@ -11,6 +11,8 @@ library(DT)
 library(deSolve)
 library(cowplot)
 library(scales)
+library(mgcv)
+library(deSolve)
 
 shinyServer(function(input, output, session) {
   #output$menu <- renderMenu({
@@ -438,6 +440,7 @@ shinyServer(function(input, output, session) {
     if (input$`county-state` == "county"){
       #print(input$`state-model`)
       df <- corona() %>% filter(state == tolower(input$`state-model`))
+      df <- df[order(df$county),] 
       #print(df)
       counties <- as.vector(df["county"])
       #print(counties)
@@ -452,6 +455,7 @@ shinyServer(function(input, output, session) {
   
   
   output$state_model <- renderPlot({
+    #Defining SIR Model function for later use
     SIRmodel <- function(time, group, parameters) {
       S <- group[1]; I <- group[2];  R <- group[3]
       N <- S + I + R
@@ -462,7 +466,8 @@ shinyServer(function(input, output, session) {
       list(c(dS, dI, dR))
     }
     
-    
+    #Checking if the input is the state or the county
+    #Then transforming the data based on that
     if (input$`county-state` == "state"){
       corona.sama.all <- state_data() %>% filter(state == input$`state-model`) %>% 
         group_by(date) %>%
@@ -474,31 +479,16 @@ shinyServer(function(input, output, session) {
         ) %>%
         select(date, time, sumcases, logsumcases)
       colnames(corona.sama.all) <- c("date", "time", "cases", "logcases")
-      cutoff <- "2020/04/01"
+      cutoff <- "2020/05/01"
       corona.sama <- corona.sama.all %>% filter(date<=cutoff)
       
       plotdata <- pivot_longer(corona.sama, col=3:4, names_to="Type", values_to="values")
-      
-      
-      
-      # One Plot
-      plot <- ggplot(data=plotdata, aes(x=date, y=values)) +
-        geom_point(size=1.1) +
-        geom_line() +
-        facet_wrap(vars(Type), scales = "free_y")
-      
+
       #linear Model
       fit.lm <- lm(logcases ~ time, data=corona.sama)
-      library(broom)
       tidy(fit.lm)
       
-      #Other Fitted Model:
-      
-      library(deSolve)
-      
-      
       # Model with some bounds
-      
       gamma <- 1/input$beta
       betas <- c(
         confint(fit.lm)[2,1],
@@ -510,8 +500,16 @@ shinyServer(function(input, output, session) {
       alpha <- exp(as.numeric(tidy(fit.lm)[1,2]))
       #alpha
       
-      times <- seq(0,40,1)
+      #This makes sure we only plot the number of days in the data for that particular county/state, 
+      #and adds the predict_days input to the model
+      ndays <- max(corona.sama$time)
+      n <- ndays + input$predict_days
+      times <- seq(0,n,1)
       
+      #Using the SIR model to fit the model
+#TODO: model currenlty plots three possible lines, best case, current case, and worst case.  
+#       It is not a confidence interval on the current case (as can be seen by the overlap at the top of the curve)
+#ALTHOUGH: this does make a certain level of sense, we'll just need to change our interpretation a bit
       solutions <- sapply(betas, 
                           function(x) {
                             df <-
@@ -561,25 +559,16 @@ shinyServer(function(input, output, session) {
         select(date, time, sumcases, logsumcases)
       print(corona.sama.all)
       colnames(corona.sama.all) <- c("date", "time", "cases", "logcases")
-      cutoff <- "2020/04/01"
+      cutoff <- "2020/05/01"
       corona.sama <- corona.sama.all %>% filter(date<=cutoff)
       
       plotdata <- pivot_longer(corona.sama, col=3:4, names_to="Type", values_to="values")
       
-      
-      
       #linear Model
       fit.lm <- lm(logcases ~ time, data=corona.sama)
-      library(broom)
       tidy(fit.lm)
       
-      #Other Fitted Model:
-      
-      library(deSolve)
-      
-      
       # Model with some bounds
-      
       gamma <- 1/input$beta
       betas <- c(
         confint(fit.lm)[2,1],
@@ -591,7 +580,9 @@ shinyServer(function(input, output, session) {
       alpha <- exp(as.numeric(tidy(fit.lm)[1,2]))
       #alpha
       
-      times <- seq(0,40,1)
+      ndays <- max(corona.sama$time)
+      n <- ndays + input$predict_days
+      times <- seq(0,n,1)
       
       solutions <- sapply(betas, 
                           function(x) {
@@ -629,5 +620,137 @@ shinyServer(function(input, output, session) {
     
   })
   
+  
+  
+###
+### splines model
+###
+  
+  
+  output$spline_model <- renderPlot({
+    #Checking if the input is the state or the county
+    #Then transforming the data based on that
+    if (input$`county-state` == "state"){
+      corona.sama.all <- state_data() %>% filter(state == input$`state-model`) %>%
+        group_by(date) %>%
+        summarize(cumcases=sum(cases)) %>%
+        select(date,cumcases) %>%
+        mutate(
+          time = c(0,cumsum(as.numeric(diff(date)))),
+          newcases = c(3,diff(cumcases))
+        ) %>%
+        select(date, time, newcases, cumcases)
+      colnames(corona.sama.all) <- c("date", "time", "newcases", "cumcases")
+      cutoff <- "2020/05/01"
+      corona.sama <- corona.sama.all %>% filter(date<=cutoff)
+
+      plotdata <- pivot_longer(corona.sama, col=3:4, names_to="Type", values_to="values")
+
+      #splines Model
+      fit <- gam(cumcases ~ s(time, fx=FALSE, bs="cr"), family=poisson(link=log), data=corona.sama)
+      pred_days <- input$predict_days
+      pred_vec <- seq(0,pred_days,1)
+      newtime <- c(corona.sama$time, tail(corona.sama$time,1) + pred_vec)
+      predictions <- predict(fit, newdata = data.frame(time=newtime), type="link", se.fit=TRUE)
+      
+      plotdata <- tibble(
+        time = newtime,
+        date = seq.Date(from=head(corona.sama$date,1), by=1, length.out=length(time)),
+        logmean = predictions$fit,
+        logmean.LB = logmean - 1.96*predictions$se.fit,
+        logmean.UB = logmean + 1.96*predictions$se.fit,
+        mean = exp(logmean),
+        mean.LB = exp(logmean.LB),
+        mean.UB = exp(logmean.UB)
+      )
+      
+      #Logmean cases
+      p1 <- ggplot(data=plotdata, aes(x=date, y=logmean)) +
+        geom_line(color="red") +
+        geom_ribbon(aes(ymin=logmean.LB, ymax=logmean.UB), fill="red", color=NA, alpha=0.2) +
+        geom_point(data=corona.sama, aes(x=date, y=log(cumcases)), col="darkblue", alpha=0.4) +
+        scale_x_date(date_breaks="8 days", date_label="%b %d") +
+        labs(
+          title= paste0("Number of Infections in ", input$`state-model`, " (Population:", input$population ,")"),
+          subtitle=paste0("Recovery Period is assumed as ", input$beta, " days"), x="Day", y="Number of Infections") +
+        theme_minimal()
+      
+      #Mean cases
+      p2 <- ggplot(data=plotdata, aes(x=date, y=mean)) +
+        geom_line(color="red") +
+        geom_ribbon(aes(ymin=mean.LB, ymax=mean.UB), fill="red", color=NA, alpha=0.2) +
+        geom_point(data=corona.sama, aes(x=date, y=log(cumcases)), col="darkblue", alpha=0.4) +
+        scale_x_date(date_breaks="8 days", date_label="%b %d") +
+        labs(
+          title= paste0("Number of Infections in ", input$`state-model`, " (Population:", input$population ,")"),
+          subtitle=paste0("Recovery Period is assumed as ", input$beta, " days"), x="Day", y="Number of Infections") +
+        theme_minimal()
+
+      return(p1)
+    } else {
+
+      # This is county
+      #print(input$`county-model`)
+      #print(county_data())
+      corona.sama.all <- corona() %>% filter(tolower(county) == input$`county-model`) %>%
+        group_by(date) %>%
+        summarize(cumcases=sum(cases)) %>%
+        select(date,cumcases) %>%
+        mutate(
+          time = c(0,cumsum(as.numeric(diff(date)))),
+          newcases = c(3,diff(cumcases))
+        ) %>%
+        select(date, time, newcases, cumcases)
+      colnames(corona.sama.all) <- c("date", "time", "newcases", "cumcases")
+      cutoff <- "2020/05/01"
+      corona.sama <- corona.sama.all %>% filter(date<=cutoff)
+      
+      plotdata <- pivot_longer(corona.sama, col=3:4, names_to="Type", values_to="values")
+
+      #splines Model
+      fit <- gam(cumcases ~ s(time, fx=FALSE, bs="cr"), family=poisson(link=log), data=corona.sama)
+      pred_days <- input$predict_days
+      pred_vec <- seq(0,pred_days,1)
+      newtime <- c(corona.sama$time, tail(corona.sama$time,1) + pred_vec)
+      predictions <- predict(fit, newdata = data.frame(time=newtime), type="link", se.fit=TRUE)
+      
+      plotdata <- tibble(
+        time = newtime,
+        date = seq.Date(from=head(corona.sama$date,1), by=1, length.out=length(time)),
+        logmean = predictions$fit,
+        logmean.LB = logmean - 1.96*predictions$se.fit,
+        logmean.UB = logmean + 1.96*predictions$se.fit,
+        mean = exp(logmean),
+        mean.LB = exp(logmean.LB),
+        mean.UB = exp(logmean.UB)
+      )
+      
+      #Logmean cases
+      p1 <- ggplot(data=plotdata, aes(x=date, y=logmean)) +
+        geom_line(color="red") +
+        geom_ribbon(aes(ymin=logmean.LB, ymax=logmean.UB), fill="red", color=NA, alpha=0.2) +
+        geom_point(data=corona.sama, aes(x=date, y=log(cumcases)), col="darkblue", alpha=0.4) +
+        scale_x_date(date_breaks="8 days", date_label="%b %d") +
+        labs(
+          title= paste0("Number of Infections in ", input$`state-model`, " (Population:", input$population ,")"),
+          subtitle=paste0("Recovery Period is assumed as ", input$beta, " days"), x="Day", y="Number of Infections") +
+        theme_minimal()
+      
+      #Mean cases
+      p2 <- ggplot(data=plotdata, aes(x=date, y=mean)) +
+        geom_line(color="red") +
+        geom_ribbon(aes(ymin=mean.LB, ymax=mean.UB), fill="red", color=NA, alpha=0.2) +
+        geom_point(data=corona.sama, aes(x=date, y=log(cumcases)), col="darkblue", alpha=0.4) +
+        scale_x_date(date_breaks="8 days", date_label="%b %d") +
+        labs(
+          title= paste0("Number of Infections in ", input$`state-model`, " (Population:", input$population ,")"),
+          subtitle=paste0("Recovery Period is assumed as ", input$beta, " days"), x="Day", y="Number of Infections") +
+        theme_minimal()
+      
+      return(p1)
+    }
+
+
+  })
 
 })
