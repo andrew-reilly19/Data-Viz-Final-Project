@@ -472,7 +472,7 @@ shinyServer(function(input, output, session) {
                       lat1 = 31)
         }
       } else {
-        if(input$`deaths-cases` == "case fatality rate"){
+        if(input$`deaths-cases` == "cases per thousand"){
           if(input$`log-normal` == "log"){
             thingy <- ggplot(mapitup, aes(x = long,
                                           y = lat, 
