@@ -47,7 +47,10 @@ sidebar <- dashboardSidebar(
     conditionalPanel("input.tabs == 'usa' | input.tabs == 'region'",                 #Buttons for Total United States
                      radioButtons("deaths-cases", 
                                   label = h4("Plot:"),
-                                  choices = list("Deaths" = "deaths", "Cases" = "cases", "Case Fatality Rate" = "case fatality rate"),
+                                  choices = list("Deaths" = "deaths", 
+                                                 "Cases" = "cases", 
+                                                 "Case Fatality Rate" = "case fatality rate", 
+                                                 "Cases Per Thousand" = "cases per thousand"),
                                   selected = "cases"),
                      radioButtons("log-normal",
                                   label = h4("Color Scale"),
@@ -77,11 +80,12 @@ sidebar <- dashboardSidebar(
                                  selected = "Florida"
                      ),
                      uiOutput("state-county-dropdown"),
-                     numericInput("population",
-                                  label = "Population Size",
-                                  min = 100, step = 1, value = 200000),
+                     uiOutput("population_alt"),
+                     #numericInput("population",
+                      #            label = "Population Size",
+                      #            min = 100, step = 1, value = 200000),
                      sliderInput("beta", 
-                                 label = "Recovery Rate: (8 is current estimate)",
+                                 label = "Recovery Rate:",
                                  step = 1,
                                  value = 8,
                                  min = 1, max = 15),
@@ -109,13 +113,14 @@ body <- dashboardBody(
         infoBoxOutput(width=4, "counter.cases")
       ),
       fluidRow(
-        box(width=6, 
+        box(width=12, 
             status="info", 
             title="United States Coronavirus Spread",
             solidHeader = TRUE,
             plotlyOutput("usaplot")
-        ),
-        box(width=6, 
+        )),
+      fluidRow(
+        box(width=12, 
             status="warning", 
             title = "Raw Data",
             solidHeader = TRUE, 
@@ -134,7 +139,7 @@ body <- dashboardBody(
               infoBoxOutput(width=4, "counter.cases1")
             ),
       fluidRow(
-        box(width = 7, 
+        box(width = 12, 
             status = "info",
             title = "COVID-19 Cases by County",
             solidHeader = TRUE,
@@ -157,11 +162,15 @@ body <- dashboardBody(
                                  #End Of Regional Plots and Data
     tabItem(tabName = "models",       #Modeling Tab
           fluidRow(
-            box(status = "info",
+            box(width = 6,
+                status = "info",
                 title = "SIR Modeling of Cases in different regions",
                 solidHeader = TRUE,
-                plotOutput("state_model")),
-            box(status = "info",
+                plotOutput("state_model"))
+            ),
+          fluidRow(
+            box(width = 12,
+                status = "info",
                 title = "Splines Modeling of Cases in different regions",
                 solidHeader = TRUE,
                 plotOutput("spline_model")
