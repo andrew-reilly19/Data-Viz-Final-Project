@@ -7,7 +7,7 @@ library(DT)
 library(deSolve)
 library(lubridate)
 
-header <- dashboardHeader(title = "United States Coronavirus")
+header <- dashboardHeader(title = "Coronavirus in the U.S.")
 
 
 sidebar <- dashboardSidebar(
