@@ -195,7 +195,6 @@ shinyServer(function(input, output, session) {
   
   output$usaplot <- renderPlotly({                              #Beginning of Plotly Renderings For United States.
     statedata <- state_data()
-    statedata <- statedata %>% mutate(fips = as.numeric(fips)*1000) %>% left_join(census_mut, by=c("fips" = "fip_code"))
     statedata <- statedata %>% mutate(state_alt = setNames(state.abb,state.name)[state], 
                                       date = as.numeric(as.Date(date))-18282,
                                       #cases = ifelse(state == "New York"| state == "NY" | state == "NJ", 0, cases),
@@ -269,55 +268,26 @@ shinyServer(function(input, output, session) {
           ) %>% layout(geo = g, title = paste("United States Coronavirus", input$`deaths-cases`, "on a", input$`log-normal`, "scale"))
         }
       } else{ # selected cases
-          if(input$`deaths-cases` == "cases per thousand"){
-            if(input$`log-normal` == "log"){
-              statedata$hover <- with(statedata, 
-                                      paste(state, "<br>", 
-                                            "Total Cases:", cases, "<br>", 
-                                            "Logarithm Scale:", round(log_cases, digits = 3), 
-                                            "<br>", "Total Deaths:", deaths, "<br>",
-                                            "Cases Per Thousand:", cases_per_thousand))
-              fig <- plot_geo(statedata, locationmode = "USA-states")
-              fig <- fig %>% add_trace(
-                z = ~log_cases_per_thousand, text = ~hover, locations = ~state_alt, color = ~log_cases_per_thousand, frame = ~date
-              ) %>% layout(geo = g, title = paste("United States Coronavirus", input$`deaths-cases`, "on a", input$`log-normal`, "scale"))
-            } else { # Display cases_per_thousand with a linear scale
-              statedata$hover <- with(statedata, 
-                                      paste(state, "<br>", 
-                                            "Total Cases:", cases, "<br>", 
-                                            #"Logarithm Scale:", round(log_cases, digits = 3), 
-                                            "<br>", "Total Deaths:", deaths, "<br>",
-                                            "Cases Per Thousand:", cases_per_thousand))
-              fig <- plot_geo(statedata, locationmode = "USA-states")
-              fig <- fig %>% add_trace(
-                z = ~cases_per_thousand, text = ~hover, locations = ~state_alt, color = ~cases_per_thousand, frame = ~date
-              ) %>% layout(geo = g, title = paste("United States Coronavirus", input$`deaths-cases`, "on a", input$`log-normal`, "scale"))
-            }
-          
-        }else{# selected cases
-          if(input$`log-normal` == "log"){
-            statedata$hover <- with(statedata, 
-                                    paste(state, "<br>", 
-                                          "Total Cases:", cases, "<br>", 
-                                          "Logarithm Scale:", round(log_cases, digits = 3), 
-                                          "<br>", "Total Deaths:", deaths, "<br>",
-                                          "Cases Per Thousand:", cases_per_thousand))
-            fig <- plot_geo(statedata, locationmode = "USA-states")
-            fig <- fig %>% add_trace(
-              z = ~log_cases, text = ~hover, locations = ~state_alt, color = ~log_cases, frame = ~date
-            ) %>% layout(geo = g, title = paste("United States Coronavirus", input$`deaths-cases`, "on a", input$`log-normal`, "scale"))
-          } else { # Display cases without a logarithmic scale
-            statedata$hover <- with(statedata, 
-                                    paste(state, "<br>", 
-                                          "Total Cases:", cases, "<br>", 
-                                          #"Logarithm Scale:", round(log_cases, digits = 3), 
-                                          "<br>", "Total Deaths:", deaths, "<br>",
-                                          "Cases Per Thousand:", cases_per_thousand))
-            fig <- plot_geo(statedata, locationmode = "USA-states")
-            fig <- fig %>% add_trace(
-              z = ~cases, text = ~hover, locations = ~state_alt, color = ~cases, frame = ~date
-            ) %>% layout(geo = g, title = paste("United States Coronavirus", input$`deaths-cases`, "on a", input$`log-normal`, "scale"))
-          }
+        if(input$`log-normal` == "log"){
+          statedata$hover <- with(statedata, 
+                                  paste(state, "<br>", 
+                                        "Total Cases:", cases, "<br>", 
+                                        "Logarithm Scale:", round(log_cases, digits = 3), 
+                                        "<br>", "Total Deaths:", deaths))
+          fig <- plot_geo(statedata, locationmode = "USA-states")
+          fig <- fig %>% add_trace(
+            z = ~log_cases, text = ~hover, locations = ~state_alt, color = ~log_cases, frame = ~date
+          ) %>% layout(geo = g, title = paste("United States Coronavirus", input$`deaths-cases`, "on a", input$`log-normal`, "scale"))
+        } else { # Display cases without a logarithmic scale
+          statedata$hover <- with(statedata, 
+                                  paste(state, "<br>", 
+                                        "Total Cases:", cases, "<br>", 
+                                        #"Logarithm Scale:", round(log_cases, digits = 3), 
+                                        "<br>", "Total Deaths:", deaths))
+          fig <- plot_geo(statedata, locationmode = "USA-states")
+          fig <- fig %>% add_trace(
+            z = ~cases, text = ~hover, locations = ~state_alt, color = ~cases, frame = ~date
+          ) %>% layout(geo = g, title = paste("United States Coronavirus", input$`deaths-cases`, "on a", input$`log-normal`, "scale"))
         }
       }
     }
@@ -352,10 +322,7 @@ shinyServer(function(input, output, session) {
     #         state = tolower(state),
     #         ) %>% 
     #  filter(state %nin% setdiff(unique(tolower(corona$state)), unique(map_data("county")$region)) )
-    corona <- corona() %>% filter(date == input$date) %>% filter(county != "unknown" & state == tolower(input$state)) %>% mutate(fips = as.numeric(fips))
-    corona <- corona %>% left_join(census_mut, by = c("fips" = "fip_code")) %>% 
-                          mutate(cases_per_thousand = round((cases/POPESTIMATE2019)*1000, digits = 4),
-                          log_cases_per_thousand = ifelse(cases == 0, 0, ifelse(cases_per_thousand == 0, -10000, log(cases_per_thousand))) )
+    corona <- corona() %>% filter(date == input$date) %>% filter(county != "unknown" & state == tolower(input$state))
     #corona.cases <- corona %>% mutate(county = fct_recode(county, 
     #                                                    `de kalb` = "dekalb",
     #                                                    `dona ana` = "doña ana",
@@ -439,10 +406,7 @@ shinyServer(function(input, output, session) {
                                         y = lat, 
                                         group = group,
                                         fill = log_difference, 
-                                        text = paste0(subregion, "<br>", "Cases: ", cases, 
-                                                      "<br>", "Deaths: ", deaths ,
-                                                      " <br>", "Case Fatality Rate: ", round(proportion, digits =  3)*100,"%", 
-                                                      " <br>Cases Per Thousand: ", cases_per_thousand))) +
+                                        text = paste0(subregion, "<br>", "Cases: ", cases, "<br>", "Deaths: ", deaths ," <br>", "Case Fatality Rate: ", round(proportion, digits =  3)*100,"%"))) +
             geom_polygon(color = "black", 
                          size = 0.5) + 
             theme_minimal() + 
@@ -457,10 +421,7 @@ shinyServer(function(input, output, session) {
                                         y = lat, 
                                         group = group,
                                         fill = proportion, 
-                                        text = paste0(subregion, "<br>", "Cases: ", cases,
-                                                      "<br>", "Deaths: ", deaths ,
-                                                      " <br>", "Case Fatality Rate: ", round(proportion, digits =  3)*100,"%", 
-                                                      " <br>Cases Per Thousand: ", cases_per_thousand))) +
+                                        text = paste0(subregion, "<br>", "Cases: ", cases, "<br>", "Deaths: ", deaths ," <br>", "Case Fatality Rate: ", round(proportion, digits =  3)*100,"%"))) +
             geom_polygon(color = "black", 
                          size = 0.5) + 
             theme_minimal() + 
@@ -472,82 +433,36 @@ shinyServer(function(input, output, session) {
                       lat1 = 31)
         }
       } else {
-        if(input$`deaths-cases` == "case fatality rate"){
-          if(input$`log-normal` == "log"){
-            thingy <- ggplot(mapitup, aes(x = long,
-                                          y = lat, 
-                                          group = group,
-                                          fill = log_cases_per_thousand, 
-                                          text = paste0(subregion, "<br>", "Cases: ", cases, 
-                                                        "<br>", "Deaths: ", deaths ,
-                                                        " <br>", "Case Fatality Rate: ", round(proportion, digits =  3)*100,"%", 
-                                                        " <br>Cases Per Thousand: ", cases_per_thousand))) +
-              geom_polygon(color = "black", 
-                           size = 0.5) + 
-              theme_minimal() + 
-              scale_fill_viridis_c() + 
-              labs(title = paste("Coronavirus", input$`deaths-cases`, "in" ,input$state, "by County with", input$`log-normal`, "scale"),
-                   fill = paste("Number of", input$`deaths-cases`)) + 
-              coord_map(projection = "albers", 
-                        lat0 = 25, 
-                        lat1 = 31)
-          } else {
-            thingy <- ggplot(mapitup, aes(x = long,
-                                          y = lat, 
-                                          group = group,
-                                          fill = cases_per_thousand, 
-                                          text = paste0(subregion, "<br>", "Cases: ", cases, 
-                                                        "<br>", "Deaths: ", deaths ,
-                                                        " <br>", "Case Fatality Rate: ", round(proportion, digits =  3)*100,"%", 
-                                                        " <br>Cases Per Thousand: ", cases_per_thousand))) +
-              geom_polygon(color = "black", 
-                           size = 0.5) + 
-              theme_minimal() + 
-              scale_fill_viridis_c() + 
-              labs(title = paste("Coronavirus", input$`deaths-cases`, "in" ,input$state, "by County with", input$`log-normal`, "scale"),
-                   fill = paste("Number of", input$`deaths-cases`)) + 
-              coord_map(projection = "albers", 
-                        lat0 = 25, 
-                        lat1 = 31)
-          }
+        if(input$`log-normal` == "log"){
+          thingy <- ggplot(mapitup, aes(x = long,
+                                        y = lat, 
+                                        group = group,
+                                        fill = log_cases, 
+                                        text = paste0(subregion, "<br>", "Cases: ", cases, "<br>", "Deaths: ", deaths ," <br>", "Case Fatality Rate: ", round(proportion, digits =  3)*100,"%"))) +
+            geom_polygon(color = "black", 
+                         size = 0.5) + 
+            theme_minimal() + 
+            scale_fill_viridis_c() + 
+            labs(title = paste("Coronavirus", input$`deaths-cases`, "in" ,input$state, "by County with", input$`log-normal`, "scale"),
+                 fill = paste("Number of", input$`deaths-cases`)) + 
+            coord_map(projection = "albers", 
+                      lat0 = 25, 
+                      lat1 = 31)
         } else {
-          if(input$`log-normal` == "log"){
-            thingy <- ggplot(mapitup, aes(x = long,
-                                          y = lat, 
-                                          group = group,
-                                          fill = log_cases, 
-                                          text = paste0(subregion, "<br>", "Cases: ", cases, 
-                                                        "<br>", "Deaths: ", deaths ,
-                                                        " <br>", "Case Fatality Rate: ", round(proportion, digits =  3)*100,"%", 
-                                                        " <br>Cases Per Thousand: ", cases_per_thousand))) +
-              geom_polygon(color = "black", 
-                           size = 0.5) + 
-              theme_minimal() + 
-              scale_fill_viridis_c() + 
-              labs(title = paste("Coronavirus", input$`deaths-cases`, "in" ,input$state, "by County with", input$`log-normal`, "scale"),
-                   fill = paste("Number of", input$`deaths-cases`)) + 
-              coord_map(projection = "albers", 
-                        lat0 = 25, 
-                        lat1 = 31)
-          } else {
-            thingy <- ggplot(mapitup, aes(x = long,
-                                          y = lat, 
-                                          group = group,
-                                          fill = cases, 
-                                          text = paste0(subregion, "<br>", "Cases: ", cases, 
-                                                        "<br>", "Deaths: ", deaths ,
-                                                        " <br>", "Case Fatality Rate: ", round(proportion, digits =  3)*100,"%", 
-                                                        " <br>Cases Per Thousand: ", cases_per_thousand))) +
-              geom_polygon(color = "black", 
-                           size = 0.5) + 
-              theme_minimal() + 
-              scale_fill_viridis_c() + 
-              labs(title = paste("Coronavirus", input$`deaths-cases`, "in" ,input$state, "by County with", input$`log-normal`, "scale"),
-                   fill = paste("Number of", input$`deaths-cases`)) + 
-              coord_map(projection = "albers", 
-                        lat0 = 25, 
-                        lat1 = 31)
-          }
+          thingy <- ggplot(mapitup, aes(x = long,
+                                        y = lat, 
+                                        group = group,
+                                        fill = cases, 
+                                        text = paste0(subregion, "<br>", "Cases: ", cases, "<br>", "Deaths: ", deaths ," <br>", "Case Fatality Rate: ", round(proportion, digits =  3)*100,"%"))) +
+            geom_polygon(color = "black", 
+                         size = 0.5) + 
+            theme_minimal() + 
+            scale_fill_viridis_c() + 
+            labs(title = paste("Coronavirus", input$`deaths-cases`, "in" ,input$state, "by County with", input$`log-normal`, "scale"),
+                 fill = paste("Number of", input$`deaths-cases`)) + 
+            coord_map(projection = "albers", 
+                      lat0 = 25, 
+                      lat1 = 31)
         }
       }
     }
@@ -628,14 +543,17 @@ shinyServer(function(input, output, session) {
         select(date, time, sumcases, logsumcases)
       colnames(corona.sama.all) <- c("date", "time", "cases", "logcases")
 
-      cutoff <- today()
-      corona.sama <- corona.sama.all %>% filter(date<=cutoff)
+      #cutoff <- today()
+      cutoff <- 14
+      corona.sama.pre <- corona.sama.all %>% filter(time<=cutoff)
+      corona.sama.post <- corona.sama.all %>% filter(time>cutoff)
 
+      corona.sama <- corona.sama.all
       
-      plotdata <- pivot_longer(corona.sama, col=3:4, names_to="Type", values_to="values")
+      #plotdata <- pivot_longer(corona.sama, col=3:4, names_to="Type", values_to="values")
 
-      #linear Model
-      fit.lm <- lm(logcases ~ time, data=corona.sama)
+      #first linear Model (on < 14 days)
+      fit.lm <- lm(logcases ~ time, data=corona.sama.pre)
       tidy(fit.lm)
       
       # Model with some bounds
@@ -652,14 +570,14 @@ shinyServer(function(input, output, session) {
       
       #This makes sure we only plot the number of days in the data for that particular county/state, 
       #and adds the predict_days input to the model
-      ndays <- max(corona.sama$time)
-      n <- ndays + input$predict_days
+      ndays <- max(corona.sama.pre$time)
+      n <- ndays
       times <- seq(0,n,1)
       
-      #Using the SIR model to fit the model
-#TODO: model currenlty plots three possible lines, best case, current case, and worst case.  
-#       It is not a confidence interval on the current case (as can be seen by the overlap at the top of the curve)
-#ALTHOUGH: this does make a certain level of sense, we'll just need to change our interpretation a bit
+      # testcases <- tests() %>% filter(state == input$`state-model`)
+      # pop = input$population * testcases$posrate
+      
+      #Using the SIR model to fit the first half of the model
       solutions <- sapply(betas, 
                           function(x) {
                             df <-
@@ -675,11 +593,58 @@ shinyServer(function(input, output, session) {
       
       results <- data.frame(time=times, solutions)
       colnames(results) <- c("time", "LB", "Est", "UB")
-      results <- results %>% mutate(date = seq(as.Date(corona.sama$date[1]), by = "day", length.out = length(time)))
+      results <- results %>% mutate(date = seq(as.Date(corona.sama.pre$date[1]), by = "day", length.out = length(time)))
       
-      head(results)
+      print(head(results))
+######      
+      #second linear Model (on > 14 days)
+      fit.lm2 <- lm(logcases ~ time, data=corona.sama.post)
+      tidy(fit.lm2)
       
-      plot <- ggplot(data=results, aes(x=date, y=Est)) + 
+      # Model with some bounds
+      gamma <- 1/input$beta
+      betas <- c(
+        confint(fit.lm2)[2,1],
+        as.numeric(tidy(fit.lm2)[2,2]),
+        confint(fit.lm2)[2,2]
+      ) + gamma
+      #betas
+      
+      #alpha <- exp(as.numeric(infected on day 14))
+      alpha <- max(results$Est)+exp(as.numeric(tidy(fit.lm)[1,2]))
+      
+      #This makes sure we only plot the number of days in the data for that particular county/state, 
+      #and adds the predict_days input to the model
+      ndays2 <- max(corona.sama.post$time)-14
+      n2 <- ndays2 + input$predict_days
+      times2 <- seq(0,n2,1)
+      
+      # testcases <- tests() %>% filter(state == input$`state-model`)
+      # pop = input$population * testcases$posrate
+      
+      #Using the SIR model to fit the first half of the model
+      solutions2 <- sapply(betas, 
+                          function(x) {
+                            df <-
+                              lsoda(
+                                y = c(S=input$population, I=alpha, R=0), 
+                                times = times2, 
+                                func = SIRmodel, 
+                                parms = c(beta=x, gamma=gamma)
+                              )
+                            return(data.frame(df)[,3])
+                          }
+      )
+      
+      results2 <- data.frame(time=times2, solutions2)
+      colnames(results2) <- c("time", "LB", "Est", "UB")
+      results2 <- results2 %>% mutate(date = seq(as.Date(corona.sama.post$date[1]), by = "day", length.out = length(time)))
+      
+      #putting both models into one dataset
+      resultstot <- rbind(results, results2)
+      
+      #plotting both
+      plot <- ggplot(data=resultstot, aes(x=date, y=Est)) + 
         geom_line(size=1.0, col="blue") +
         geom_line(aes(y=LB), col="lightblue", size=1, linetype=1, alpha=0.5) +
         geom_line(aes(y=UB), col="lightblue", size=1, linetype=1, alpha=0.5) +
@@ -688,7 +653,7 @@ shinyServer(function(input, output, session) {
         labs(
           title= paste0("Number of Infections in ", input$`state-model`, " (Population:", input$population ,")"), 
           subtitle=paste0("Recovery Period is assumed as ", input$beta, " days"), x="Day", y="Number of Infections") +
-        scale_x_date(date_breaks="7 days", date_label="%b %d") +
+        scale_x_date(date_breaks="6 days", date_label="%b %d") +
         theme_minimal()
       
       
@@ -765,7 +730,7 @@ shinyServer(function(input, output, session) {
         labs(
           title= paste0("Number of Infections in ", input$`county-model`, " (Population:", input$population ,")"), 
           subtitle=paste0("Recovery Period is assumed as ", input$beta, " days"), x="Day", y="Number of Infections") +
-        scale_x_date(date_breaks="7 days", date_label="%b %d") +
+        scale_x_date(date_breaks="6 days", date_label="%b %d") +
         theme_minimal()
       return(plot)
     }
@@ -786,7 +751,7 @@ shinyServer(function(input, output, session) {
     if (input$`county-state` == "state"){
       #example of how to use tests data
       testcases <- tests() %>% filter(state == input$`state-model`) %>% select('total')
-      #print(testcases)
+      print(testcases)
       
       corona.sama.all <- state_data() %>% filter(state == input$`state-model`) %>%
         group_by(date) %>%
@@ -799,7 +764,7 @@ shinyServer(function(input, output, session) {
         select(date, time, newcases, cumcases)
       colnames(corona.sama.all) <- c("date", "time", "newcases", "cumcases")
       cutoff <- "2020/05/01"
-      corona.sama <- corona.sama.all #%>% filter(date<=cutoff)
+      corona.sama <- corona.sama.all %>% filter(date<=cutoff)
 
       plotdata <- pivot_longer(corona.sama, col=3:4, names_to="Type", values_to="values")
 
@@ -826,24 +791,24 @@ shinyServer(function(input, output, session) {
         geom_line(color="red") +
         geom_ribbon(aes(ymin=logmean.LB, ymax=logmean.UB), fill="red", color=NA, alpha=0.2) +
         geom_point(data=corona.sama, aes(x=date, y=log(cumcases)), col="darkblue", alpha=0.4) +
-        scale_x_date(date_breaks="7 days", date_label="%b %d") +
+        scale_x_date(date_breaks="8 days", date_label="%b %d") +
         labs(
-          title= paste0("Log Number of Infections in ", input$`state-model`, " (Population: ", input$population ,")"),
-          subtitle="Fit with a Smoothing Spline", x="Day", y="Log Infections") +
+          title= paste0("Number of Infections in ", input$`state-model`, " (Population:", input$population ,")"),
+          subtitle=paste0("Recovery Period is assumed as ", input$beta, " days"), x="Day", y="Number of Infections") +
         theme_minimal()
       
       #Mean cases
       p2 <- ggplot(data=plotdata, aes(x=date, y=mean)) +
         geom_line(color="red") +
         geom_ribbon(aes(ymin=mean.LB, ymax=mean.UB), fill="red", color=NA, alpha=0.2) +
-        geom_point(data=corona.sama, aes(x=date, y=cumcases), col="darkblue", alpha=0.4) +
+        geom_point(data=corona.sama, aes(x=date, y=log(cumcases)), col="darkblue", alpha=0.4) +
         scale_x_date(date_breaks="8 days", date_label="%b %d") +
         labs(
-          title= paste0("Mean Number of Infections in ", input$`state-model`, " (Population: ", input$population ,")"),
-          subtitle="Fit with a Smoothing Spline", x="Day", y="Number of Infections") +
+          title= paste0("Number of Infections in ", input$`state-model`, " (Population:", input$population ,")"),
+          subtitle=paste0("Recovery Period is assumed as ", input$beta, " days"), x="Day", y="Number of Infections") +
         theme_minimal()
 
-      return(plot_grid(p2,p1,ncol=2))
+      return(p1)
     } else {
 
       # This is county
@@ -860,7 +825,7 @@ shinyServer(function(input, output, session) {
         select(date, time, newcases, cumcases)
       colnames(corona.sama.all) <- c("date", "time", "newcases", "cumcases")
       cutoff <- "2020/05/01"
-      corona.sama <- corona.sama.all #%>% filter(date<=cutoff)
+      corona.sama <- corona.sama.all %>% filter(date<=cutoff)
       
       plotdata <- pivot_longer(corona.sama, col=3:4, names_to="Type", values_to="values")
 
@@ -887,7 +852,7 @@ shinyServer(function(input, output, session) {
         geom_line(color="red") +
         geom_ribbon(aes(ymin=logmean.LB, ymax=logmean.UB), fill="red", color=NA, alpha=0.2) +
         geom_point(data=corona.sama, aes(x=date, y=log(cumcases)), col="darkblue", alpha=0.4) +
-        scale_x_date(date_breaks="7 days", date_label="%b %d") +
+        scale_x_date(date_breaks="8 days", date_label="%b %d") +
         labs(
           title= paste0("Number of Infections in ", input$`state-model`, " (Population:", input$population ,")"),
           subtitle=paste0("Recovery Period is assumed as ", input$beta, " days"), x="Day", y="Number of Infections") +
@@ -897,14 +862,14 @@ shinyServer(function(input, output, session) {
       p2 <- ggplot(data=plotdata, aes(x=date, y=mean)) +
         geom_line(color="red") +
         geom_ribbon(aes(ymin=mean.LB, ymax=mean.UB), fill="red", color=NA, alpha=0.2) +
-        geom_point(data=corona.sama, aes(x=date, y=cumcases), col="darkblue", alpha=0.4) +
+        geom_point(data=corona.sama, aes(x=date, y=log(cumcases)), col="darkblue", alpha=0.4) +
         scale_x_date(date_breaks="8 days", date_label="%b %d") +
         labs(
           title= paste0("Number of Infections in ", input$`state-model`, " (Population:", input$population ,")"),
           subtitle=paste0("Recovery Period is assumed as ", input$beta, " days"), x="Day", y="Number of Infections") +
         theme_minimal()
       
-      return(plot_grid(p2,p1,ncol=2))
+      return(p1)
     }
 
 
