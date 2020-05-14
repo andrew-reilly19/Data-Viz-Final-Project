@@ -46,7 +46,10 @@ sidebar <- dashboardSidebar(
     conditionalPanel("input.tabs == 'usa' | input.tabs == 'region'",                 #Buttons for Total United States
                      radioButtons("deaths-cases", 
                                   label = h4("Plot:"),
-                                  choices = list("Deaths" = "deaths", "Cases" = "cases", "Case Fatality Rate" = "case fatality rate"),
+                                  choices = list("Deaths" = "deaths", 
+                                                 "Cases" = "cases", 
+                                                 "Case Fatality Rate" = "case fatality rate", 
+                                                 "Cases Per Thousand" = "cases per thousand"),
                                   selected = "cases"),
                      radioButtons("log-normal",
                                   label = h4("Color Scale"),
