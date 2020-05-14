@@ -11,8 +11,10 @@ library(DT)
 library(deSolve)
 library(cowplot)
 library(scales)
+library(lubridate)
 library(mgcv)
 library(deSolve)
+
 
 shinyServer(function(input, output, session) {
   #output$menu <- renderMenu({
@@ -137,7 +139,7 @@ shinyServer(function(input, output, session) {
     nr <- sum(val$deaths)
     infoBox(
       value = comma(as.numeric(nr), digits = 1),
-      title = "Total U.S. Deaths",
+      title = paste("Total U.S. Deaths"),
       icon = icon("ambulance"),
       color = "red",
       fill = TRUE
@@ -439,10 +441,35 @@ shinyServer(function(input, output, session) {
   })
   
   
+  output$counter.cases1 <- renderInfoBox({
+    val <- state_data() %>% filter(state==input$state)  %>% group_by(state) %>% filter(date==max(date)) %>% summarise(cases=sum(cases), deaths=sum(deaths))
+    nr <- sum(val$cases)
+    infoBox(
+      value = comma(as.numeric(nr), digits = 1),
+      title = paste("Total Cases in", input$state),
+      icon = icon("heartbeat"),
+      color = "purple",
+      fill = TRUE
+    )
+  })
+  
+
+  output$counter.deaths1 <- renderInfoBox({
+    val <- state_data() %>% filter(state==input$state)  %>% group_by(state) %>% filter(date==max(date)) %>% summarise(cases=sum(cases), deaths=sum(deaths))
+    nr <- sum(val$deaths)
+    infoBox(
+      value = comma(as.numeric(nr), digits = 1),
+      title = paste("Total Deaths in", input$state),
+      icon = icon("ambulance"),
+      color = "red",
+      fill = TRUE
+    )
+  })
   
   ##################################################### MODELING PAGE #########################################################
+  
+  output$`state-county-dropdown` <- renderUI({
 
-    output$`state-county-dropdown` <- renderUI({
     
     if (input$`county-state` == "county"){
       #print(input$`state-model`)
@@ -486,9 +513,10 @@ shinyServer(function(input, output, session) {
         ) %>%
         select(date, time, sumcases, logsumcases)
       colnames(corona.sama.all) <- c("date", "time", "cases", "logcases")
-      cutoff <- "2020/05/01"
-      #The SIR Model doesn't seem to do well when predicting right from the beginning, so we'll also filter by # of cases
-      corona.sama <- corona.sama.all %>% filter(date<=cutoff, cases >= 2)
+
+      cutoff <- today()
+      corona.sama <- corona.sama.all %>% filter(date<=cutoff)
+
       
       plotdata <- pivot_longer(corona.sama, col=3:4, names_to="Type", values_to="values")
 
@@ -568,9 +596,10 @@ shinyServer(function(input, output, session) {
         select(date, time, sumcases, logsumcases)
       print(corona.sama.all)
       colnames(corona.sama.all) <- c("date", "time", "cases", "logcases")
-      cutoff <- "2020/05/01"
-      #The SIR Model doesn't seem to do well when predicting right from the beginning, so we'll also filter by # of cases
-      corona.sama <- corona.sama.all %>% filter(date<=cutoff, cases >= 2)
+
+      cutoff <- today()
+      corona.sama <- corona.sama.all %>% filter(date<=cutoff)
+
       
       plotdata <- pivot_longer(corona.sama, col=3:4, names_to="Type", values_to="values")
       
