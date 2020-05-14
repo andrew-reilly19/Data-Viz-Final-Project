@@ -816,16 +816,9 @@ server <- function(input, output, session) {
             }
             #print(counties)
         } else {
-            print(input$`state-model`)
-            print(input$`county-state`)
+            #print(input$`state-model`)
+            #print(input$`county-state`)
             if (input$`county-state` == "state"){
-                #df <- state_data() %>% filter(state == input$`state-model`) %>% mutate(fips = as.numeric(fips)*1000)
-                #print(head(as.data.frame(df)))
-                #print(state_data())
-                #print(as.data.frame(census_mut))
-                #states <- as.data.frame(df) %>% left_join(as.data.frame(census_mut), by("state" = "STNAME"))
-                #print(population)
-                #population <- states[1,]$POPESTIMATE2019
                 population <- census_mut %>% filter(STNAME == input$`state-model`)
                 if (nrow(population)>0){
                     object <- numericInput("population",

@@ -15,6 +15,8 @@ library(lubridate)
 library(mgcv)
 library(deSolve)
 
+census_county <- read.csv("./data/co-est2019-alldata.csv")
+census_mut <- census_county %>% select(STATE, COUNTY, POPESTIMATE2019, STNAME, CTYNAME) %>% mutate(fip_code = STATE*1000+COUNTY)
 
 shinyServer(function(input, output, session) {
   #output$menu <- renderMenu({
@@ -790,6 +792,45 @@ shinyServer(function(input, output, session) {
     }
 
 
+  })
+  
+  #new
+  output$population_alt <- renderUI({
+    
+    if (input$`county-state` == "county"){
+      #print(input$`state-model`)
+      df <- corona() %>% filter(state == tolower(input$`state-model`),
+                                county == input$`county-model`) %>% mutate(fips = as.numeric(fips))
+      #we should only have one county by now
+      counties <- df %>% left_join(census_mut, by=c('fips'='fip_code'))
+      if(nrow(counties) > 0){
+        population <- counties[1,]$POPESTIMATE2019
+        object <- numericInput("population",
+                               label = "Population Size: (2019 Census Projection)",
+                               min = 0, step = 1, value = population)
+      } else {
+        object <- numericInput("population",
+                               label = "Population Size",
+                               min = 0, step = 1, value = 0)
+      }
+      #print(counties)
+    } else {
+      #print(input$`state-model`)
+      #print(input$`county-state`)
+      if (input$`county-state` == "state"){
+        population <- census_mut %>% filter(STNAME == input$`state-model`)
+        if (nrow(population)>0){
+          object <- numericInput("population",
+                                 label = "Population Size: (2019 Census Projection)",
+                                 min = 0, step = 1, value = population[1,]$POPESTIMATE2019)
+        }else {
+          object <- numericInput("population",
+                                 label = "Population Size",
+                                 min = 0, step = 1, value = 0)
+        }
+      } else {object <- NULL}
+    }
+    return(object)
   })
 
 })

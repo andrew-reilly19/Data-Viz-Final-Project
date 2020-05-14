@@ -76,9 +76,10 @@ sidebar <- dashboardSidebar(
                                  selected = "Florida"
                      ),
                      uiOutput("state-county-dropdown"),
-                     numericInput("population",
-                                  label = "Population Size",
-                                  min = 100, step = 1, value = 200000),
+                     uiOutput("population_alt"),
+                     #numericInput("population",
+                      #            label = "Population Size",
+                      #            min = 100, step = 1, value = 200000),
                      sliderInput("beta", 
                                  label = "Recovery Rate: (8 is current estimate)",
                                  step = 1,
