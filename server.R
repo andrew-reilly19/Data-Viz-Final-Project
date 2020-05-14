@@ -20,20 +20,20 @@ census_mut <- census_county %>% select(STATE, COUNTY, POPESTIMATE2019, STNAME, C
 
 shinyServer(function(input, output, session) {
   #output$menu <- renderMenu({
-    
+  
   #})
   observeEvent(input$`deaths-cases` == "case fatality rate" & input$`log-normal` == "log",{
     if(input$`deaths-cases` == "case fatality rate" & input$`log-normal` == "log")
-               showModal(
-                 modalDialog(
-                  title = "Important Message about this plot!",
-                  "Because of Logarithmic scaling, this is a bad plot to show, as the logarithm of case fatality rates will all be negative"
-                            )
-                        )
-                  }
-               )
+      showModal(
+        modalDialog(
+          title = "Important Message about this plot!",
+          "Because of Logarithmic scaling, this is a bad plot to show, as the logarithm of case fatality rates will all be negative"
+        )
+      )
+  }
+  )
   
-
+  
   output$data_info <- renderUI({
     if(input$state == "Virginia"){
       object <- box(width = 4, 
@@ -43,7 +43,7 @@ shinyServer(function(input, output, session) {
                     collapsible = FALSE,
                     h4("Virginia has over 60 cities what are independent of county localities."),
                     h5("This means that, currently, this graph strongly underrepresents reported COVID19 cases in the counties plotted.")
-                    )
+      )
     }
     if(input$state == "New York"){
       object <- box(width = 4, 
@@ -63,8 +63,8 @@ shinyServer(function(input, output, session) {
                     h4("The logarithmic scaling gives an indication of how far away (in terms of a tenfold increase of cases) different counties are from each other. This assumes that the populations of counties are the same, and the infection rates are the same between counties."))
     }
   })
-               
-            
+  
+  
   
   county_data <- reactiveFileReader(
     intervalMillis = 10000,
@@ -75,10 +75,10 @@ shinyServer(function(input, output, session) {
   
   
   state_data <- reactiveFileReader(
-          intervalMillis = 10000, 
-          session = session,
-          filePath = "https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-states.csv",
-          readFunc = read_csv)
+    intervalMillis = 10000, 
+    session = session,
+    filePath = "https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-states.csv",
+    readFunc = read_csv)
   
   tests_data <- reactiveFileReader(
     intervalMillis = 10000, 
@@ -87,76 +87,76 @@ shinyServer(function(input, output, session) {
     readFunc = read_csv)
   
   tests <- reactive({
-  tests <- tests_data()
-  tests <- tests %>% select(c("state","positive","negative")) %>% mutate("total" = positive + negative) %>% 
-    mutate("posrate" = positive/total) %>% mutate("state" = fct_recode(factor(state),'Arizona'='AZ','Alaska'='AK','Alabama'='AL','Arkansas'='AR',
-                                                                       'California'='CA','Colorado'='CO','Connecticut'='CT','Delaware'='DE',
-                                                                       'Florida'='FL','Georgia'='GA','Hawaii'='HI','Iowa'='IA','Idaho'='ID',
-                                                                       'Illinois'='IL','Indiana'='IN','Kansas'='KS','Kentucky'='KY',
-                                                                       'Louisiana'='LA','Massachusetts'='MA','Maryland'='MD','Maine'='ME',
-                                                                       'Michigan'='MI','Minnesota'='MN','Missouri'='MO','Mississippi'='MS',
-                                                                       'Montana'='MT','North Carolina'='NC','North Dakota'='ND','Nebraska'='NE',
-                                                                       'New Hampshire'='NH','New Jersey'='NJ','New Mexico'='NM','Nevada'='NV',
-                                                                       'New York'='NY','Ohio'='OH','Oklahoma'='OK','Oregon'='OR',
-                                                                       'Pennsylvania'='PA','Rhode Island'='RI','South Carolina'='SC',
-                                                                       'South Dakota'='SD','Tennessee'='TN','Texas'='TX','Utah'='UT','Virginia'='VA',
-                                                                       'Vermont'='VT','Washington'='WA','Wisconsin'='WI','West Virginia'='WV',
-                                                                       'Wyoming'='WY'))
-  return(tests)
+    tests <- tests_data()
+    tests <- tests %>% select(c("state","positive","negative")) %>% mutate("total" = positive + negative) %>% 
+      mutate("posrate" = positive/total) %>% mutate("state" = fct_recode(factor(state),'Arizona'='AZ','Alaska'='AK','Alabama'='AL','Arkansas'='AR',
+                                                                         'California'='CA','Colorado'='CO','Connecticut'='CT','Delaware'='DE',
+                                                                         'Florida'='FL','Georgia'='GA','Hawaii'='HI','Iowa'='IA','Idaho'='ID',
+                                                                         'Illinois'='IL','Indiana'='IN','Kansas'='KS','Kentucky'='KY',
+                                                                         'Louisiana'='LA','Massachusetts'='MA','Maryland'='MD','Maine'='ME',
+                                                                         'Michigan'='MI','Minnesota'='MN','Missouri'='MO','Mississippi'='MS',
+                                                                         'Montana'='MT','North Carolina'='NC','North Dakota'='ND','Nebraska'='NE',
+                                                                         'New Hampshire'='NH','New Jersey'='NJ','New Mexico'='NM','Nevada'='NV',
+                                                                         'New York'='NY','Ohio'='OH','Oklahoma'='OK','Oregon'='OR',
+                                                                         'Pennsylvania'='PA','Rhode Island'='RI','South Carolina'='SC',
+                                                                         'South Dakota'='SD','Tennessee'='TN','Texas'='TX','Utah'='UT','Virginia'='VA',
+                                                                         'Vermont'='VT','Washington'='WA','Wisconsin'='WI','West Virginia'='WV',
+                                                                         'Wyoming'='WY'))
+    return(tests)
   })
   #Tests will have 5 columns - 'state' for state, 'positive' for positive test results, 'negative' for negative results,
   #'total' for total tests done, and 'posrate' for percentage of tests that are positive.
   
   corona <- reactive({
-  corona <- county_data()
-  `%nin%` = Negate(`%in%`)
-  #print(input$date)
-  corona <- corona %>% #filter(state == input$state) %>% 
-    mutate(county = tolower(county), 
-           state = tolower(state),
-    ) %>% 
-    filter(state %nin% setdiff(unique(tolower(corona$state)), unique(map_data("county")$region)) )
-  corona <- corona %>% mutate(county = fct_recode(county, 
-                                                        `de kalb` = "dekalb",
-                                                        `dona ana` = "doña ana",
-                                                        `du page` = "dupage",
-                                                        `la porte` = "laporte",
-                                                        `la salle` = "lasalle",
-                                                        `new york` = "new york city",
-                                                        `obrien` = "o'brien",
-                                                        `prince georges` = "prince george's",
-                                                        `queen annes` = "queen anne's",
-                                                        `st bernard` = "st. bernard",
-                                                        `st charles` = "st. charles",
-                                                        `st clair` = "st. clair",
-                                                        `st francis` ="st. francis",
-                                                        `st francois` = "st. francois",
-                                                        `st helena` = "st. helena",
-                                                        `st james` = "st. james",
-                                                        `st john the baptist` = "st. john the baptist",
-                                                        `st johns` = "st. johns",
-                                                        `st joseph` = "st. joseph",
-                                                        `st landry` = "st. landry",
-                                                        `st lawrence` = "st. lawrence",
-                                                        `st louis` =  "st. louis",
-                                                        `st louis city` = "st. louis city",
-                                                        `st lucie` = "st. lucie",
-                                                        `st martin` = "st. martin",
-                                                        `st mary` = "st. mary",
-                                                        `st marys` = "st. mary's",
-                                                        `st tammany` = "st. tammany",
-                                                        `ste genevieve` = "ste. genevieve"),
-                                    log_cases = log(cases, base = 10),
-                                    log_deaths = log(deaths, base = 10),
-                                    log_difference = log_deaths - log_cases,
-                                    proportion = deaths/cases)
-  adjustment <- NULL
-  for (i in c("richmond", "kings", "queens", "bronx")){
-    tingle <- corona[as.vector(corona["county"] == "new york"),] %>% mutate(county = i)
-    adjustment <- rbind(adjustment, tingle)
-  }
-  corona <- rbind(adjustment, corona)
-  return(corona)
+    corona <- county_data()
+    `%nin%` = Negate(`%in%`)
+    #print(input$date)
+    corona <- corona %>% #filter(state == input$state) %>% 
+      mutate(county = tolower(county), 
+             state = tolower(state),
+      ) %>% 
+      filter(state %nin% setdiff(unique(tolower(corona$state)), unique(map_data("county")$region)) )
+    corona <- corona %>% mutate(county = fct_recode(county, 
+                                                    `de kalb` = "dekalb",
+                                                    `dona ana` = "doña ana",
+                                                    `du page` = "dupage",
+                                                    `la porte` = "laporte",
+                                                    `la salle` = "lasalle",
+                                                    `new york` = "new york city",
+                                                    `obrien` = "o'brien",
+                                                    `prince georges` = "prince george's",
+                                                    `queen annes` = "queen anne's",
+                                                    `st bernard` = "st. bernard",
+                                                    `st charles` = "st. charles",
+                                                    `st clair` = "st. clair",
+                                                    `st francis` ="st. francis",
+                                                    `st francois` = "st. francois",
+                                                    `st helena` = "st. helena",
+                                                    `st james` = "st. james",
+                                                    `st john the baptist` = "st. john the baptist",
+                                                    `st johns` = "st. johns",
+                                                    `st joseph` = "st. joseph",
+                                                    `st landry` = "st. landry",
+                                                    `st lawrence` = "st. lawrence",
+                                                    `st louis` =  "st. louis",
+                                                    `st louis city` = "st. louis city",
+                                                    `st lucie` = "st. lucie",
+                                                    `st martin` = "st. martin",
+                                                    `st mary` = "st. mary",
+                                                    `st marys` = "st. mary's",
+                                                    `st tammany` = "st. tammany",
+                                                    `ste genevieve` = "ste. genevieve"),
+                                log_cases = log(cases, base = 10),
+                                log_deaths = log(deaths, base = 10),
+                                log_difference = log_deaths - log_cases,
+                                proportion = deaths/cases)
+    adjustment <- NULL
+    for (i in c("richmond", "kings", "queens", "bronx")){
+      tingle <- corona[as.vector(corona["county"] == "new york"),] %>% mutate(county = i)
+      adjustment <- rbind(adjustment, tingle)
+    }
+    corona <- rbind(adjustment, corona)
+    return(corona)
   })
   
   
@@ -187,6 +187,18 @@ shinyServer(function(input, output, session) {
     )
   })
   
+  output$counter.tests <- renderInfoBox({
+    val <- tests_data() 
+    nr <- sum(val$totalTestResults)
+    infoBox(
+      value = comma(as.numeric(nr), digits = 1),
+      title = "Total U.S. Testing",
+      icon = icon("vial"),
+      color = "green",
+      fill = TRUE
+    )
+  })
+  
   output$usadata <-renderDT({
     
     state_data() %>% 
@@ -202,9 +214,7 @@ shinyServer(function(input, output, session) {
                                       log_cases = ifelse(cases == 0,0, log(cases)),
                                       log_deaths = ifelse(deaths == 0, 0 , log(deaths)),
                                       log_difference = log_deaths - log_cases,
-                                      proportion = deaths/cases,
-                                      cases_per_thousand = round((cases/POPESTIMATE2019)*1000, digits = 4),
-                                      log_cases_per_thousand = ifelse(cases == 0, 0, ifelse(cases_per_thousand == 0, -10000, log(cases_per_thousand)))
+                                      proportion = deaths/cases
     )
     #statedata$hover <- with(statedata, paste(state, "<br>", "Total Cases:", cases, "<br>", "Logarithm Scale:", round(log_cases, digits = 3), "<br>", "Deaths:", deaths))
     
@@ -224,8 +234,7 @@ shinyServer(function(input, output, session) {
                                 paste(state, "<br>", 
                                       "Total Cases:", cases, "<br>", 
                                       "Logarithm Scale:", round(log_cases, digits = 3), 
-                                      "<br>", "Total Deaths:", deaths, "<br>",
-                                      "Cases Per Thousand:", cases_per_thousand))
+                                      "<br>", "Total Deaths:", deaths))
         fig <- plot_geo(statedata, locationmode = "USA-states")
         fig <- fig %>% add_trace(
           z = ~log_deaths, text = ~hover, locations = ~state_alt, color = ~log_deaths, frame = ~date
@@ -235,8 +244,7 @@ shinyServer(function(input, output, session) {
                                 paste(state, "<br>", 
                                       "Total Cases:", cases, "<br>", 
                                       #"Logarithm Scale:", round(log_cases, digits = 3), 
-                                      "<br>", "Total Deaths:", deaths, "<br>",
-                                      "Cases Per Thousand:", cases_per_thousand))
+                                      "<br>", "Total Deaths:", deaths))
         fig <- plot_geo(statedata, locationmode = "USA-states")
         fig <- fig %>% add_trace(
           z = ~deaths, text = ~hover, locations = ~state_alt, color = ~deaths, frame = ~date
@@ -251,8 +259,7 @@ shinyServer(function(input, output, session) {
                                         "Logarithm Scale:", round(log_cases, digits = 3), 
                                         "<br>", "Total Deaths:", deaths, "<br>",
                                         "log(CFR):", log_difference, "<br>",
-                                        "Case Fatality Rate:", paste(round(proportion, digits = 3)*100, "%", "<br>",
-                                                                     "Cases Per Thousand:", cases_per_thousand, sep = "")
+                                        "Case Fatality Rate:", paste(round(proportion, digits = 3)*100, "%", sep = "")
                                   )
           )
           fig <- plot_geo(statedata, locationmode = "USA-states")
@@ -265,8 +272,7 @@ shinyServer(function(input, output, session) {
                                         "Total Cases:", cases, "<br>", 
                                         #"Logarithm Scale:", round(log_cases, digits = 3), 
                                         "Total Deaths:", deaths, "<br>",
-                                        "Case Fatality Rate:", paste(round(proportion, digits = 3)*100, "%", "<br>",
-                                                                     "Cases Per Thousand:", cases_per_thousand, sep = "")
+                                        "Case Fatality Rate:", paste(round(proportion, digits = 3)*100, "%", sep = "")
                                   )
           )
           fig <- plot_geo(statedata, locationmode = "USA-states")
@@ -335,16 +341,16 @@ shinyServer(function(input, output, session) {
   
   
   observeEvent(input$`state-model`,{
-  output$county_slider <- renderUI({
-    data <- county_data() %>% filter(state == input$state) %>% mutate(date = as.Date(date))
-    smallest_date <- min(data$date)
-    #data <- data %>% mutate(date = date)
-    object <- sliderInput("date",
-                          label = "Select Days from Zero-Day",
-                          min = min(data$date, na.rm = TRUE),
-                          max = max(data$date, na.rm = TRUE),
-                          value = max(data$date, na.rm = TRUE),
-                          animate = FALSE)
+    output$county_slider <- renderUI({
+      data <- county_data() %>% filter(state == input$state) %>% mutate(date = as.Date(date))
+      smallest_date <- min(data$date)
+      #data <- data %>% mutate(date = date)
+      object <- sliderInput("date",
+                            label = "Select Days from Zero-Day",
+                            min = min(data$date, na.rm = TRUE),
+                            max = max(data$date, na.rm = TRUE),
+                            value = max(data$date, na.rm = TRUE),
+                            animate = FALSE)
     })
   })
   
@@ -360,8 +366,8 @@ shinyServer(function(input, output, session) {
     #  filter(state %nin% setdiff(unique(tolower(corona$state)), unique(map_data("county")$region)) )
     corona <- corona() %>% filter(date == input$date) %>% filter(county != "unknown" & state == tolower(input$state)) %>% mutate(fips = as.numeric(fips))
     corona <- corona %>% left_join(census_mut, by = c("fips" = "fip_code")) %>% 
-                          mutate(cases_per_thousand = round((cases/POPESTIMATE2019)*1000, digits = 4),
-                          log_cases_per_thousand = ifelse(cases == 0, 0, ifelse(cases_per_thousand == 0, -10000, log(cases_per_thousand))) )
+      mutate(cases_per_thousand = round((cases/POPESTIMATE2019)*1000, digits = 4),
+             log_cases_per_thousand = ifelse(cases == 0, 0, ifelse(cases_per_thousand == 0, -10000, log(cases_per_thousand))) )
     #corona.cases <- corona %>% mutate(county = fct_recode(county, 
     #                                                    `de kalb` = "dekalb",
     #                                                    `dona ana` = "doña ana",
@@ -410,15 +416,15 @@ shinyServer(function(input, output, session) {
                                       group = group,
                                       fill = log_deaths, 
                                       text = paste0(subregion, "<br>", "Cases: ", cases, "<br>", "Deaths: ", deaths ," <br>", "Case Fatality Rate: ", round(proportion, digits =  3)*100,"%"
-                                                    )
                                       )
-                          ) +
+        )
+        ) +
           geom_polygon(color = "black", 
                        size = 0.5) + 
           theme_minimal() + 
           scale_fill_viridis_c() + 
           labs(title = paste("Coronavirus", input$`deaths-cases`, "in" ,input$state, "by County with", input$`log-normal`, "scale"),
-               fill = paste("Number of", input$`deaths-cases`), x="", y="") + 
+               fill = paste("Number of", input$`deaths-cases`)) + 
           coord_map(projection = "albers", 
                     lat0 = 25, 
                     lat1 = 31)
@@ -433,7 +439,7 @@ shinyServer(function(input, output, session) {
           theme_minimal() + 
           scale_fill_viridis_c() + 
           labs(title = paste("Coronavirus", input$`deaths-cases`, "in" ,input$state, "by County with", input$`log-normal`, "scale"),
-               fill = paste("Number of", input$`deaths-cases`), x="", y="") + 
+               fill = paste("Number of", input$`deaths-cases`)) + 
           coord_map(projection = "albers", 
                     lat0 = 25, 
                     lat1 = 31)
@@ -454,7 +460,7 @@ shinyServer(function(input, output, session) {
             theme_minimal() + 
             scale_fill_viridis_c() + 
             labs(title = paste("Coronavirus", input$`deaths-cases`, "in" ,input$state, "by County with", input$`log-normal`, "scale"),
-                 fill = paste("Number of", input$`deaths-cases`), x="", y="") + 
+                 fill = paste("Number of", input$`deaths-cases`)) + 
             coord_map(projection = "albers", 
                       lat0 = 25, 
                       lat1 = 31)
@@ -472,13 +478,13 @@ shinyServer(function(input, output, session) {
             theme_minimal() + 
             scale_fill_viridis_c() + 
             labs(title = paste("Coronavirus", input$`deaths-cases`, "in" ,input$state, "by County with", input$`log-normal`, "scale"),
-                 fill = paste("Number of", input$`deaths-cases`), x="", y="") + 
+                 fill = paste("Number of", input$`deaths-cases`)) + 
             coord_map(projection = "albers", 
                       lat0 = 25, 
                       lat1 = 31)
         }
       } else {
-        if(input$`deaths-cases` == "cases per thousand"){
+        if(input$`deaths-cases` == "case fatality rate"){
           if(input$`log-normal` == "log"){
             thingy <- ggplot(mapitup, aes(x = long,
                                           y = lat, 
@@ -493,7 +499,7 @@ shinyServer(function(input, output, session) {
               theme_minimal() + 
               scale_fill_viridis_c() + 
               labs(title = paste("Coronavirus", input$`deaths-cases`, "in" ,input$state, "by County with", input$`log-normal`, "scale"),
-                   fill = paste("Number of", input$`deaths-cases`), x="", y="") + 
+                   fill = paste("Number of", input$`deaths-cases`)) + 
               coord_map(projection = "albers", 
                         lat0 = 25, 
                         lat1 = 31)
@@ -511,7 +517,7 @@ shinyServer(function(input, output, session) {
               theme_minimal() + 
               scale_fill_viridis_c() + 
               labs(title = paste("Coronavirus", input$`deaths-cases`, "in" ,input$state, "by County with", input$`log-normal`, "scale"),
-                   fill = paste("Number of", input$`deaths-cases`), x="", y="") + 
+                   fill = paste("Number of", input$`deaths-cases`)) + 
               coord_map(projection = "albers", 
                         lat0 = 25, 
                         lat1 = 31)
@@ -531,7 +537,7 @@ shinyServer(function(input, output, session) {
               theme_minimal() + 
               scale_fill_viridis_c() + 
               labs(title = paste("Coronavirus", input$`deaths-cases`, "in" ,input$state, "by County with", input$`log-normal`, "scale"),
-                   fill = paste("Number of", input$`deaths-cases`), x="", y="") + 
+                   fill = paste("Number of", input$`deaths-cases`)) + 
               coord_map(projection = "albers", 
                         lat0 = 25, 
                         lat1 = 31)
@@ -549,7 +555,7 @@ shinyServer(function(input, output, session) {
               theme_minimal() + 
               scale_fill_viridis_c() + 
               labs(title = paste("Coronavirus", input$`deaths-cases`, "in" ,input$state, "by County with", input$`log-normal`, "scale"),
-                   fill = paste("Number of", input$`deaths-cases`), x="", y="") + 
+                   fill = paste("Number of", input$`deaths-cases`)) + 
               coord_map(projection = "albers", 
                         lat0 = 25, 
                         lat1 = 31)
@@ -573,7 +579,7 @@ shinyServer(function(input, output, session) {
     )
   })
   
-
+  
   output$counter.deaths1 <- renderInfoBox({
     val <- state_data() %>% filter(state==input$state)  %>% group_by(state) %>% filter(date==max(date)) %>% summarise(cases=sum(cases), deaths=sum(deaths))
     nr <- sum(val$deaths)
@@ -586,10 +592,37 @@ shinyServer(function(input, output, session) {
     )
   })
   
+  output$counter.tests1 <- renderInfoBox({
+    tests <- tests_data()
+    tests <- tests %>% select(c("state","positive","negative")) %>% mutate("total" = positive + negative) %>% 
+      mutate("posrate" = positive/total) %>% mutate("state" = fct_recode(factor(state),'Arizona'='AZ','Alaska'='AK','Alabama'='AL','Arkansas'='AR',
+                                                                         'California'='CA','Colorado'='CO','Connecticut'='CT','Delaware'='DE',
+                                                                         'Florida'='FL','Georgia'='GA','Hawaii'='HI','Iowa'='IA','Idaho'='ID',
+                                                                         'Illinois'='IL','Indiana'='IN','Kansas'='KS','Kentucky'='KY',
+                                                                         'Louisiana'='LA','Massachusetts'='MA','Maryland'='MD','Maine'='ME',
+                                                                         'Michigan'='MI','Minnesota'='MN','Missouri'='MO','Mississippi'='MS',
+                                                                         'Montana'='MT','North Carolina'='NC','North Dakota'='ND','Nebraska'='NE',
+                                                                         'New Hampshire'='NH','New Jersey'='NJ','New Mexico'='NM','Nevada'='NV',
+                                                                         'New York'='NY','Ohio'='OH','Oklahoma'='OK','Oregon'='OR',
+                                                                         'Pennsylvania'='PA','Rhode Island'='RI','South Carolina'='SC',
+                                                                         'South Dakota'='SD','Tennessee'='TN','Texas'='TX','Utah'='UT','Virginia'='VA',
+                                                                         'Vermont'='VT','Washington'='WA','Wisconsin'='WI','West Virginia'='WV',
+                                                                         'Wyoming'='WY'))
+    val <- tests %>% filter(state==input$state)
+    nr <- sum(val$total)
+    infoBox(
+      value = comma(as.numeric(nr), digits = 1),
+      title = paste("Total", input$state ,"Testing"),
+      icon = icon("vial"),
+      color = "green",
+      fill = TRUE
+    )
+  })
+  
   ##################################################### MODELING PAGE #########################################################
   
   output$`state-county-dropdown` <- renderUI({
-
+    
     
     if (input$`county-state` == "county"){
       #print(input$`state-model`)
@@ -602,7 +635,7 @@ shinyServer(function(input, output, session) {
                             label = "Select County",
                             choices = counties,
                             selected = counties[1]
-                            )
+      )
     } else {object <- NULL}
     return(object)
   })
@@ -633,13 +666,13 @@ shinyServer(function(input, output, session) {
         ) %>%
         select(date, time, sumcases, logsumcases)
       colnames(corona.sama.all) <- c("date", "time", "cases", "logcases")
-
+      
       cutoff <- today()
       corona.sama <- corona.sama.all %>% filter(date<=cutoff)
-
+      
       
       plotdata <- pivot_longer(corona.sama, col=3:4, names_to="Type", values_to="values")
-
+      
       #linear Model
       fit.lm <- lm(logcases ~ time, data=corona.sama)
       tidy(fit.lm)
@@ -663,9 +696,9 @@ shinyServer(function(input, output, session) {
       times <- seq(0,n,1)
       
       #Using the SIR model to fit the model
-#TODO: model currenlty plots three possible lines, best case, current case, and worst case.  
-#       It is not a confidence interval on the current case (as can be seen by the overlap at the top of the curve)
-#ALTHOUGH: this does make a certain level of sense, we'll just need to change our interpretation a bit
+      #TODO: model currenlty plots three possible lines, best case, current case, and worst case.  
+      #       It is not a confidence interval on the current case (as can be seen by the overlap at the top of the curve)
+      #ALTHOUGH: this does make a certain level of sense, we'll just need to change our interpretation a bit
       solutions <- sapply(betas, 
                           function(x) {
                             df <-
@@ -694,15 +727,15 @@ shinyServer(function(input, output, session) {
         labs(
           title= paste0("Number of Infections in ", input$`state-model`, " (Population:", input$population ,")"), 
           subtitle=paste0("Recovery Period is assumed as ", input$beta, " days"), x="Day", y="Number of Infections") +
-        scale_x_date(date_breaks="7 days", date_label="%b %d") +
+        scale_x_date(date_breaks="6 days", date_label="%b %d") +
         theme_minimal()
       
       
       return(plot)
     } else {
       
-
-# This is county
+      
+      # This is county
       #print(input$`county-model`)
       #print(county_data())
       corona.sama.all <- corona() %>% filter(tolower(county) == input$`county-model`) %>% 
@@ -716,10 +749,10 @@ shinyServer(function(input, output, session) {
         select(date, time, sumcases, logsumcases)
       print(corona.sama.all)
       colnames(corona.sama.all) <- c("date", "time", "cases", "logcases")
-
+      
       cutoff <- today()
       corona.sama <- corona.sama.all %>% filter(date<=cutoff)
-
+      
       
       plotdata <- pivot_longer(corona.sama, col=3:4, names_to="Type", values_to="values")
       
@@ -771,7 +804,7 @@ shinyServer(function(input, output, session) {
         labs(
           title= paste0("Number of Infections in ", input$`county-model`, " (Population:", input$population ,")"), 
           subtitle=paste0("Recovery Period is assumed as ", input$beta, " days"), x="Day", y="Number of Infections") +
-        scale_x_date(date_breaks="7 days", date_label="%b %d") +
+        scale_x_date(date_breaks="6 days", date_label="%b %d") +
         theme_minimal()
       return(plot)
     }
@@ -781,9 +814,9 @@ shinyServer(function(input, output, session) {
   
   
   
-###
-### splines model
-###
+  ###
+  ### splines model
+  ###
   
   
   output$spline_model <- renderPlot({
@@ -792,7 +825,7 @@ shinyServer(function(input, output, session) {
     if (input$`county-state` == "state"){
       #example of how to use tests data
       testcases <- tests() %>% filter(state == input$`state-model`) %>% select('total')
-      #print(testcases)
+      print(testcases)
       
       corona.sama.all <- state_data() %>% filter(state == input$`state-model`) %>%
         group_by(date) %>%
@@ -805,10 +838,10 @@ shinyServer(function(input, output, session) {
         select(date, time, newcases, cumcases)
       colnames(corona.sama.all) <- c("date", "time", "newcases", "cumcases")
       cutoff <- "2020/05/01"
-      corona.sama <- corona.sama.all #%>% filter(date<=cutoff)
-
+      corona.sama <- corona.sama.all %>% filter(date<=cutoff)
+      
       plotdata <- pivot_longer(corona.sama, col=3:4, names_to="Type", values_to="values")
-
+      
       #splines Model
       fit <- gam(cumcases ~ s(time, fx=FALSE, bs="cr"), family=poisson(link=log), data=corona.sama)
       pred_days <- input$predict_days
@@ -832,26 +865,26 @@ shinyServer(function(input, output, session) {
         geom_line(color="red") +
         geom_ribbon(aes(ymin=logmean.LB, ymax=logmean.UB), fill="red", color=NA, alpha=0.2) +
         geom_point(data=corona.sama, aes(x=date, y=log(cumcases)), col="darkblue", alpha=0.4) +
-        scale_x_date(date_breaks="7 days", date_label="%b %d") +
+        scale_x_date(date_breaks="8 days", date_label="%b %d") +
         labs(
-          title= paste0("Log Number of Infections in ", input$`state-model`, " (Population: ", input$population ,")"),
-          subtitle="Fit with a Smoothing Spline", x="Day", y="Log Infections") +
+          title= paste0("Number of Infections in ", input$`state-model`, " (Population:", input$population ,")"),
+          subtitle=paste0("Recovery Period is assumed as ", input$beta, " days"), x="Day", y="Number of Infections") +
         theme_minimal()
       
       #Mean cases
       p2 <- ggplot(data=plotdata, aes(x=date, y=mean)) +
         geom_line(color="red") +
         geom_ribbon(aes(ymin=mean.LB, ymax=mean.UB), fill="red", color=NA, alpha=0.2) +
-        geom_point(data=corona.sama, aes(x=date, y=cumcases), col="darkblue", alpha=0.4) +
+        geom_point(data=corona.sama, aes(x=date, y=log(cumcases)), col="darkblue", alpha=0.4) +
         scale_x_date(date_breaks="8 days", date_label="%b %d") +
         labs(
-          title= paste0("Mean Number of Infections in ", input$`state-model`, " (Population: ", input$population ,")"),
-          subtitle="Fit with a Smoothing Spline", x="Day", y="Number of Infections") +
+          title= paste0("Number of Infections in ", input$`state-model`, " (Population:", input$population ,")"),
+          subtitle=paste0("Recovery Period is assumed as ", input$beta, " days"), x="Day", y="Number of Infections") +
         theme_minimal()
-
-      return(plot_grid(p2,p1,ncol=2))
+      
+      return(p1)
     } else {
-
+      
       # This is county
       #print(input$`county-model`)
       #print(county_data())
@@ -866,10 +899,10 @@ shinyServer(function(input, output, session) {
         select(date, time, newcases, cumcases)
       colnames(corona.sama.all) <- c("date", "time", "newcases", "cumcases")
       cutoff <- "2020/05/01"
-      corona.sama <- corona.sama.all #%>% filter(date<=cutoff)
+      corona.sama <- corona.sama.all %>% filter(date<=cutoff)
       
       plotdata <- pivot_longer(corona.sama, col=3:4, names_to="Type", values_to="values")
-
+      
       #splines Model
       fit <- gam(cumcases ~ s(time, fx=FALSE, bs="cr"), family=poisson(link=log), data=corona.sama)
       pred_days <- input$predict_days
@@ -893,7 +926,7 @@ shinyServer(function(input, output, session) {
         geom_line(color="red") +
         geom_ribbon(aes(ymin=logmean.LB, ymax=logmean.UB), fill="red", color=NA, alpha=0.2) +
         geom_point(data=corona.sama, aes(x=date, y=log(cumcases)), col="darkblue", alpha=0.4) +
-        scale_x_date(date_breaks="7 days", date_label="%b %d") +
+        scale_x_date(date_breaks="8 days", date_label="%b %d") +
         labs(
           title= paste0("Number of Infections in ", input$`state-model`, " (Population:", input$population ,")"),
           subtitle=paste0("Recovery Period is assumed as ", input$beta, " days"), x="Day", y="Number of Infections") +
@@ -903,17 +936,17 @@ shinyServer(function(input, output, session) {
       p2 <- ggplot(data=plotdata, aes(x=date, y=mean)) +
         geom_line(color="red") +
         geom_ribbon(aes(ymin=mean.LB, ymax=mean.UB), fill="red", color=NA, alpha=0.2) +
-        geom_point(data=corona.sama, aes(x=date, y=cumcases), col="darkblue", alpha=0.4) +
+        geom_point(data=corona.sama, aes(x=date, y=log(cumcases)), col="darkblue", alpha=0.4) +
         scale_x_date(date_breaks="8 days", date_label="%b %d") +
         labs(
           title= paste0("Number of Infections in ", input$`state-model`, " (Population:", input$population ,")"),
           subtitle=paste0("Recovery Period is assumed as ", input$beta, " days"), x="Day", y="Number of Infections") +
         theme_minimal()
       
-      return(plot_grid(p2,p1,ncol=2))
+      return(p1)
     }
-
-
+    
+    
   })
   
   #new
@@ -954,5 +987,5 @@ shinyServer(function(input, output, session) {
     }
     return(object)
   })
-
+  
 })
