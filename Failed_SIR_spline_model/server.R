@@ -543,14 +543,17 @@ shinyServer(function(input, output, session) {
         select(date, time, sumcases, logsumcases)
       colnames(corona.sama.all) <- c("date", "time", "cases", "logcases")
 
-      cutoff <- today()
-      corona.sama <- corona.sama.all %>% filter(date<=cutoff)
+      #cutoff <- today()
+      cutoff <- 14
+      corona.sama.pre <- corona.sama.all %>% filter(time<=cutoff)
+      corona.sama.post <- corona.sama.all %>% filter(time>cutoff)
 
+      corona.sama <- corona.sama.all
       
-      plotdata <- pivot_longer(corona.sama, col=3:4, names_to="Type", values_to="values")
+      #plotdata <- pivot_longer(corona.sama, col=3:4, names_to="Type", values_to="values")
 
-      #linear Model
-      fit.lm <- lm(logcases ~ time, data=corona.sama)
+      #first linear Model (on < 14 days)
+      fit.lm <- lm(logcases ~ time, data=corona.sama.pre)
       tidy(fit.lm)
       
       # Model with some bounds
@@ -567,14 +570,14 @@ shinyServer(function(input, output, session) {
       
       #This makes sure we only plot the number of days in the data for that particular county/state, 
       #and adds the predict_days input to the model
-      ndays <- max(corona.sama$time)
-      n <- ndays + input$predict_days
+      ndays <- max(corona.sama.pre$time)
+      n <- ndays
       times <- seq(0,n,1)
       
-      #Using the SIR model to fit the model
-#TODO: model currenlty plots three possible lines, best case, current case, and worst case.  
-#       It is not a confidence interval on the current case (as can be seen by the overlap at the top of the curve)
-#ALTHOUGH: this does make a certain level of sense, we'll just need to change our interpretation a bit
+      # testcases <- tests() %>% filter(state == input$`state-model`)
+      # pop = input$population * testcases$posrate
+      
+      #Using the SIR model to fit the first half of the model
       solutions <- sapply(betas, 
                           function(x) {
                             df <-
@@ -590,11 +593,58 @@ shinyServer(function(input, output, session) {
       
       results <- data.frame(time=times, solutions)
       colnames(results) <- c("time", "LB", "Est", "UB")
-      results <- results %>% mutate(date = seq(as.Date(corona.sama$date[1]), by = "day", length.out = length(time)))
+      results <- results %>% mutate(date = seq(as.Date(corona.sama.pre$date[1]), by = "day", length.out = length(time)))
       
-      head(results)
+      print(head(results))
+######      
+      #second linear Model (on > 14 days)
+      fit.lm2 <- lm(logcases ~ time, data=corona.sama.post)
+      tidy(fit.lm2)
       
-      plot <- ggplot(data=results, aes(x=date, y=Est)) + 
+      # Model with some bounds
+      gamma <- 1/input$beta
+      betas <- c(
+        confint(fit.lm2)[2,1],
+        as.numeric(tidy(fit.lm2)[2,2]),
+        confint(fit.lm2)[2,2]
+      ) + gamma
+      #betas
+      
+      #alpha <- exp(as.numeric(infected on day 14))
+      alpha <- max(results$Est)+exp(as.numeric(tidy(fit.lm)[1,2]))
+      
+      #This makes sure we only plot the number of days in the data for that particular county/state, 
+      #and adds the predict_days input to the model
+      ndays2 <- max(corona.sama.post$time)-14
+      n2 <- ndays2 + input$predict_days
+      times2 <- seq(0,n2,1)
+      
+      # testcases <- tests() %>% filter(state == input$`state-model`)
+      # pop = input$population * testcases$posrate
+      
+      #Using the SIR model to fit the first half of the model
+      solutions2 <- sapply(betas, 
+                          function(x) {
+                            df <-
+                              lsoda(
+                                y = c(S=input$population, I=alpha, R=0), 
+                                times = times2, 
+                                func = SIRmodel, 
+                                parms = c(beta=x, gamma=gamma)
+                              )
+                            return(data.frame(df)[,3])
+                          }
+      )
+      
+      results2 <- data.frame(time=times2, solutions2)
+      colnames(results2) <- c("time", "LB", "Est", "UB")
+      results2 <- results2 %>% mutate(date = seq(as.Date(corona.sama.post$date[1]), by = "day", length.out = length(time)))
+      
+      #putting both models into one dataset
+      resultstot <- rbind(results, results2)
+      
+      #plotting both
+      plot <- ggplot(data=resultstot, aes(x=date, y=Est)) + 
         geom_line(size=1.0, col="blue") +
         geom_line(aes(y=LB), col="lightblue", size=1, linetype=1, alpha=0.5) +
         geom_line(aes(y=UB), col="lightblue", size=1, linetype=1, alpha=0.5) +
@@ -603,7 +653,7 @@ shinyServer(function(input, output, session) {
         labs(
           title= paste0("Number of Infections in ", input$`state-model`, " (Population:", input$population ,")"), 
           subtitle=paste0("Recovery Period is assumed as ", input$beta, " days"), x="Day", y="Number of Infections") +
-        scale_x_date(date_breaks="7 days", date_label="%b %d") +
+        scale_x_date(date_breaks="6 days", date_label="%b %d") +
         theme_minimal()
       
       
@@ -680,7 +730,7 @@ shinyServer(function(input, output, session) {
         labs(
           title= paste0("Number of Infections in ", input$`county-model`, " (Population:", input$population ,")"), 
           subtitle=paste0("Recovery Period is assumed as ", input$beta, " days"), x="Day", y="Number of Infections") +
-        scale_x_date(date_breaks="7 days", date_label="%b %d") +
+        scale_x_date(date_breaks="6 days", date_label="%b %d") +
         theme_minimal()
       return(plot)
     }
@@ -701,7 +751,7 @@ shinyServer(function(input, output, session) {
     if (input$`county-state` == "state"){
       #example of how to use tests data
       testcases <- tests() %>% filter(state == input$`state-model`) %>% select('total')
-      #print(testcases)
+      print(testcases)
       
       corona.sama.all <- state_data() %>% filter(state == input$`state-model`) %>%
         group_by(date) %>%
@@ -714,7 +764,7 @@ shinyServer(function(input, output, session) {
         select(date, time, newcases, cumcases)
       colnames(corona.sama.all) <- c("date", "time", "newcases", "cumcases")
       cutoff <- "2020/05/01"
-      corona.sama <- corona.sama.all #%>% filter(date<=cutoff)
+      corona.sama <- corona.sama.all %>% filter(date<=cutoff)
 
       plotdata <- pivot_longer(corona.sama, col=3:4, names_to="Type", values_to="values")
 
@@ -741,24 +791,24 @@ shinyServer(function(input, output, session) {
         geom_line(color="red") +
         geom_ribbon(aes(ymin=logmean.LB, ymax=logmean.UB), fill="red", color=NA, alpha=0.2) +
         geom_point(data=corona.sama, aes(x=date, y=log(cumcases)), col="darkblue", alpha=0.4) +
-        scale_x_date(date_breaks="7 days", date_label="%b %d") +
+        scale_x_date(date_breaks="8 days", date_label="%b %d") +
         labs(
-          title= paste0("Log Number of Infections in ", input$`state-model`, " (Population: ", input$population ,")"),
-          subtitle="Fit with a Smoothing Spline", x="Day", y="Log Infections") +
+          title= paste0("Number of Infections in ", input$`state-model`, " (Population:", input$population ,")"),
+          subtitle=paste0("Recovery Period is assumed as ", input$beta, " days"), x="Day", y="Number of Infections") +
         theme_minimal()
       
       #Mean cases
       p2 <- ggplot(data=plotdata, aes(x=date, y=mean)) +
         geom_line(color="red") +
         geom_ribbon(aes(ymin=mean.LB, ymax=mean.UB), fill="red", color=NA, alpha=0.2) +
-        geom_point(data=corona.sama, aes(x=date, y=cumcases), col="darkblue", alpha=0.4) +
+        geom_point(data=corona.sama, aes(x=date, y=log(cumcases)), col="darkblue", alpha=0.4) +
         scale_x_date(date_breaks="8 days", date_label="%b %d") +
         labs(
-          title= paste0("Mean Number of Infections in ", input$`state-model`, " (Population: ", input$population ,")"),
-          subtitle="Fit with a Smoothing Spline", x="Day", y="Number of Infections") +
+          title= paste0("Number of Infections in ", input$`state-model`, " (Population:", input$population ,")"),
+          subtitle=paste0("Recovery Period is assumed as ", input$beta, " days"), x="Day", y="Number of Infections") +
         theme_minimal()
 
-      return(plot_grid(p2,p1,ncol=2))
+      return(p1)
     } else {
 
       # This is county
@@ -775,7 +825,7 @@ shinyServer(function(input, output, session) {
         select(date, time, newcases, cumcases)
       colnames(corona.sama.all) <- c("date", "time", "newcases", "cumcases")
       cutoff <- "2020/05/01"
-      corona.sama <- corona.sama.all #%>% filter(date<=cutoff)
+      corona.sama <- corona.sama.all %>% filter(date<=cutoff)
       
       plotdata <- pivot_longer(corona.sama, col=3:4, names_to="Type", values_to="values")
 
@@ -802,7 +852,7 @@ shinyServer(function(input, output, session) {
         geom_line(color="red") +
         geom_ribbon(aes(ymin=logmean.LB, ymax=logmean.UB), fill="red", color=NA, alpha=0.2) +
         geom_point(data=corona.sama, aes(x=date, y=log(cumcases)), col="darkblue", alpha=0.4) +
-        scale_x_date(date_breaks="7 days", date_label="%b %d") +
+        scale_x_date(date_breaks="8 days", date_label="%b %d") +
         labs(
           title= paste0("Number of Infections in ", input$`state-model`, " (Population:", input$population ,")"),
           subtitle=paste0("Recovery Period is assumed as ", input$beta, " days"), x="Day", y="Number of Infections") +
@@ -812,14 +862,14 @@ shinyServer(function(input, output, session) {
       p2 <- ggplot(data=plotdata, aes(x=date, y=mean)) +
         geom_line(color="red") +
         geom_ribbon(aes(ymin=mean.LB, ymax=mean.UB), fill="red", color=NA, alpha=0.2) +
-        geom_point(data=corona.sama, aes(x=date, y=cumcases), col="darkblue", alpha=0.4) +
+        geom_point(data=corona.sama, aes(x=date, y=log(cumcases)), col="darkblue", alpha=0.4) +
         scale_x_date(date_breaks="8 days", date_label="%b %d") +
         labs(
           title= paste0("Number of Infections in ", input$`state-model`, " (Population:", input$population ,")"),
           subtitle=paste0("Recovery Period is assumed as ", input$beta, " days"), x="Day", y="Number of Infections") +
         theme_minimal()
       
-      return(plot_grid(p2,p1,ncol=2))
+      return(p1)
     }
 
 
