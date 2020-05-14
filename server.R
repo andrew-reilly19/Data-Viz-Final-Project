@@ -412,7 +412,7 @@ shinyServer(function(input, output, session) {
           theme_minimal() + 
           scale_fill_viridis_c() + 
           labs(title = paste("Coronavirus", input$`deaths-cases`, "in" ,input$state, "by County with", input$`log-normal`, "scale"),
-               fill = paste("Number of", input$`deaths-cases`)) + 
+               fill = paste("Number of", input$`deaths-cases`), x="", y="") + 
           coord_map(projection = "albers", 
                     lat0 = 25, 
                     lat1 = 31)
@@ -427,7 +427,7 @@ shinyServer(function(input, output, session) {
           theme_minimal() + 
           scale_fill_viridis_c() + 
           labs(title = paste("Coronavirus", input$`deaths-cases`, "in" ,input$state, "by County with", input$`log-normal`, "scale"),
-               fill = paste("Number of", input$`deaths-cases`)) + 
+               fill = paste("Number of", input$`deaths-cases`), x="", y="") + 
           coord_map(projection = "albers", 
                     lat0 = 25, 
                     lat1 = 31)
@@ -448,7 +448,7 @@ shinyServer(function(input, output, session) {
             theme_minimal() + 
             scale_fill_viridis_c() + 
             labs(title = paste("Coronavirus", input$`deaths-cases`, "in" ,input$state, "by County with", input$`log-normal`, "scale"),
-                 fill = paste("Number of", input$`deaths-cases`)) + 
+                 fill = paste("Number of", input$`deaths-cases`), x="", y="") + 
             coord_map(projection = "albers", 
                       lat0 = 25, 
                       lat1 = 31)
@@ -466,7 +466,7 @@ shinyServer(function(input, output, session) {
             theme_minimal() + 
             scale_fill_viridis_c() + 
             labs(title = paste("Coronavirus", input$`deaths-cases`, "in" ,input$state, "by County with", input$`log-normal`, "scale"),
-                 fill = paste("Number of", input$`deaths-cases`)) + 
+                 fill = paste("Number of", input$`deaths-cases`), x="", y="") + 
             coord_map(projection = "albers", 
                       lat0 = 25, 
                       lat1 = 31)
@@ -487,7 +487,7 @@ shinyServer(function(input, output, session) {
               theme_minimal() + 
               scale_fill_viridis_c() + 
               labs(title = paste("Coronavirus", input$`deaths-cases`, "in" ,input$state, "by County with", input$`log-normal`, "scale"),
-                   fill = paste("Number of", input$`deaths-cases`)) + 
+                   fill = paste("Number of", input$`deaths-cases`), x="", y="") + 
               coord_map(projection = "albers", 
                         lat0 = 25, 
                         lat1 = 31)
@@ -505,7 +505,7 @@ shinyServer(function(input, output, session) {
               theme_minimal() + 
               scale_fill_viridis_c() + 
               labs(title = paste("Coronavirus", input$`deaths-cases`, "in" ,input$state, "by County with", input$`log-normal`, "scale"),
-                   fill = paste("Number of", input$`deaths-cases`)) + 
+                   fill = paste("Number of", input$`deaths-cases`), x="", y="") + 
               coord_map(projection = "albers", 
                         lat0 = 25, 
                         lat1 = 31)
@@ -525,7 +525,7 @@ shinyServer(function(input, output, session) {
               theme_minimal() + 
               scale_fill_viridis_c() + 
               labs(title = paste("Coronavirus", input$`deaths-cases`, "in" ,input$state, "by County with", input$`log-normal`, "scale"),
-                   fill = paste("Number of", input$`deaths-cases`)) + 
+                   fill = paste("Number of", input$`deaths-cases`), x="", y="") + 
               coord_map(projection = "albers", 
                         lat0 = 25, 
                         lat1 = 31)
@@ -543,7 +543,7 @@ shinyServer(function(input, output, session) {
               theme_minimal() + 
               scale_fill_viridis_c() + 
               labs(title = paste("Coronavirus", input$`deaths-cases`, "in" ,input$state, "by County with", input$`log-normal`, "scale"),
-                   fill = paste("Number of", input$`deaths-cases`)) + 
+                   fill = paste("Number of", input$`deaths-cases`), x="", y="") + 
               coord_map(projection = "albers", 
                         lat0 = 25, 
                         lat1 = 31)
