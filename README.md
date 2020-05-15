@@ -1,6 +1,9 @@
 # Data-Viz-Final-Project
 Final project for Data Visualization class Spring 2020
 
+App currently deployed at:
+https://andrewlreilly.shinyapps.io/Corona-Final-Project/
+
 To-do list:
   * Add spline model to modeling tab **Andrew**
   * Incorporate census dataset into models for better population accuracy **Justin**
