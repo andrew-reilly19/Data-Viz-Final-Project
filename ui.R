@@ -120,6 +120,25 @@ body <- dashboardBody(
                   plotlyOutput("usaplot")
               )),
             fluidRow(
+              box(width = 6, 
+                  status = "info",
+                  title = "Information:",
+                  solidHeader = TRUE,
+                  collapsible = FALSE,
+                  h4(""),
+                  h5("Above is a 'playable' map of Coronavirus in the United States with some features. Below you can explore the raw data."),
+                  h5(""),
+                  h5("Logarithmic scale: Suggested for 'Cases' and 'Deaths' which shows approximately how far one stat is from another in terms of a tenfold increase of Cases or Deaths"),
+                  h5(""),
+                  h5("Linear Scale: Suggested for Case Fatality Rate, and Cases Per Thousand. Both of these metrics are highly sensitive to testing in particular states."),
+                  h5(""),
+                  h5("Case Fatality Rate: Gives an approximation of how deadly Coronavirus is between states. This is a metric biased based on who gets tested in these states -- very rough approximation"),
+                  h5(""),
+                  h5("Cases Per Thousand: Shows how many cases there are based on the population -- shows which states have a higher percent of their population have tested positive for Coronavirus.")
+                  
+              )
+            ),
+            fluidRow(
               box(width=12, 
                   status="warning", 
                   title = "Raw Data",
@@ -167,7 +186,23 @@ body <- dashboardBody(
                   status = "info",
                   title = "SIR Modeling of Cases in different regions",
                   solidHeader = TRUE,
-                  plotOutput("state_model"))),
+                  plotOutput("state_model")),
+              box(width = 6, 
+                  status = "warning",
+                  title = "Warning",
+                  solidHeader = TRUE,
+                  collapsible = FALSE,
+                  h4(paste0("The model to the left is an S(usceptible) I(nfected) R(ecovered) model fit to the best linear approximation of the transmission rate. ",
+                            "You can see the effect that social distancing has had -- the actual number of cases (for most states/counties) is much less than the projected number of cases. ", 
+                            "The Populations of (states/county) is based off of US Census projections for 2019")),
+                  h5(""),
+                  h4(paste0("Below are Cubic spline models to predict the change in the number of cases.",
+                            "This in turn, fits an exponential model predicting the total number of cases.")),
+                  h4(""),
+                  h4("You can change how many days into the future you want to estimate the number of cases (for any state/county)!")
+                  
+              )
+            ),
             fluidRow(
               box(width = 12,
                   status = "info",

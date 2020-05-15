@@ -14,8 +14,9 @@ library(scales)
 library(lubridate)
 library(mgcv)
 library(deSolve)
+library(broom)
 
-census_county <- read.csv("./data/co-est2019-alldata.csv")
+census_county <- read.csv("./Data/co-est2019-alldata.csv")
 census_mut <- census_county %>% select(STATE, COUNTY, POPESTIMATE2019, STNAME, CTYNAME) %>% mutate(fip_code = STATE*1000+COUNTY)
 
 shinyServer(function(input, output, session) {
@@ -490,7 +491,7 @@ shinyServer(function(input, output, session) {
                       lat1 = 31)
         }
       } else {
-        if(input$`deaths-cases` == "case fatality rate"){
+        if(input$`deaths-cases` == "cases per thousand"){
           if(input$`log-normal` == "log"){
             thingy <- ggplot(mapitup, aes(x = long,
                                           y = lat, 
@@ -843,7 +844,7 @@ shinyServer(function(input, output, session) {
         ) %>%
         select(date, time, newcases, cumcases)
       colnames(corona.sama.all) <- c("date", "time", "newcases", "cumcases")
-      cutoff <- "2020/05/01"
+      cutoff <- today()
       corona.sama <- corona.sama.all %>% filter(date<=cutoff)
       
       plotdata <- pivot_longer(corona.sama, col=3:4, names_to="Type", values_to="values")
